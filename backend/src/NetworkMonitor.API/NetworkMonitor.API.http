@@ -1,0 +1,6 @@
+@NetworkMonitor.API_HostAddress = http://localhost:5087
+
+GET {{NetworkMonitor.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

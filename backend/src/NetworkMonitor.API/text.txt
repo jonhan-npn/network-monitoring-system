@@ -1,0 +1,20 @@
+// appsettings.Development.json
+// {
+//   "Logging": {
+//     "LogLevel": {
+//       "Default": "Information",
+//       "Microsoft.AspNetCore": "Warning"
+//     }
+//   }
+// }
+
+//appsettings.json
+// {
+//   "Logging": {
+//     "LogLevel": {
+//       "Default": "Information",
+//       "Microsoft.AspNetCore": "Warning"
+//     }
+//   },
+//   "AllowedHosts": "*"
+// }

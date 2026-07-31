@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/NetworkMonitor.API/NetworkMonitor.API.csproj" />
+    <Project Path="src/NetworkMonitor.Application/NetworkMonitor.Application.csproj" />
+    <Project Path="src/NetworkMonitor.Domain/NetworkMonitor.Domain.csproj" />
+    <Project Path="src/NetworkMonitor.Infrastructure/NetworkMonitor.Infrastructure.csproj" />
+    <Project Path="src/NetworkMonitor.Shared/NetworkMonitor.Shared.csproj" />
+    <Project Path="src/NetworkMonitor.Worker/NetworkMonitor.Worker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/API.Tests/API.Tests.csproj" />
+    <Project Path="tests/IntegrationTests/IntegrationTests.csproj" />
+    <Project Path="tests/UnitTests/UnitTests.csproj" />
+  </Folder>
+</Solution>

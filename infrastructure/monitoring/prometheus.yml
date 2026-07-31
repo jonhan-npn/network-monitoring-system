@@ -1,0 +1,36 @@
+# ============================================================================
+# Optional: only needed once you add prometheus-net (or similar) to
+# NetworkMonitor.API and expose a /metrics endpoint. Not required for the
+# core dashboard — this is for step 10 (polish) or beyond, if you want
+# infra-level metrics (request rates, latency, GC) alongside your own
+# app-level device/ping data that already lives in Postgres.
+# ============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # ASP.NET Core API — requires the prometheus-net.AspNetCore package
+  # and app.UseHttpMetrics() / MapMetrics() in Program.cs
+  - job_name: "netmonitor-api"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["api:8080"]
+        labels:
+          service: "api"
+
+  # Worker background service — only if you add a small Kestrel listener
+  # or prometheus-net's push-gateway support, since it has no HTTP port
+  # by default.
+  # - job_name: "netmonitor-worker"
+  #   metrics_path: /metrics
+  #   static_configs:
+  #     - targets: ["worker:9090"]
+  #       labels:
+  #         service: "worker"
+
+  # Prometheus scraping itself
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]

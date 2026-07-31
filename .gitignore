@@ -1,0 +1,104 @@
+# ============================================
+# Environment / Secrets
+# ============================================
+
+.env
+.env.*
+!.env.example
+
+# ============================================
+# .NET
+# ============================================
+
+**/bin/
+**/obj/
+
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+
+# Rider
+.idea/
+
+# ============================================
+# .NET Logs
+# ============================================
+
+*.log
+
+# ============================================
+# Entity Framework
+# ============================================
+
+# Keep migrations!
+# Do NOT ignore Migrations/ directories.
+
+# ============================================
+# Node / Angular
+# ============================================
+
+**/node_modules/
+
+# Angular build output
+**/dist/
+**/.angular/
+
+# Angular cache
+.angular/
+
+# ============================================
+# Environment-specific Angular files
+# ============================================
+
+# Don't ignore environment.ts unless it contains secrets.
+# Usually API URLs are okay to commit.
+
+# ============================================
+# OS files
+# ============================================
+
+.DS_Store
+Thumbs.db
+
+# ============================================
+# Editor
+# ============================================
+
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# ============================================
+# Coverage / Test output
+# ============================================
+
+**/coverage/
+**/TestResults/
+
+# ============================================
+# Docker
+# ============================================
+
+*.tar
+
+[johan@nyta network-monitoring-system]$ git init
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: will change to "main" in Git 3.0. To configure the initial branch name
+hint: to use in all of your new repositories, which will suppress this warning,
+hint: call:
+hint:
+hint: 	git config --global init.defaultBranch <name>
+hint:
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint:
+hint: 	git branch -m <name>
+hint:
+hint: Disable this message with "git config set advice.defaultBranchName false"
+Initialized empty Git repository in /home/johan/program/Project/network-monitoring-system/.git/
+[johan@nyta network-monitoring-system]$ 
+
