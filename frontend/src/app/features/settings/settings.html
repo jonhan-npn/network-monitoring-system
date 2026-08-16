@@ -1,1 +1,13 @@
-<p>settings works!</p>
+<div class="workspace-page">
+  <header class="page-topbar"><a routerLink="/" class="page-brand">netwatch</a><nav class="page-nav"><a routerLink="/">Overview</a><a routerLink="/devices">Devices</a><a routerLink="/logs">Event log</a><a routerLink="/settings" class="active">Settings</a><a routerLink="/users">Users</a></nav><span class="page-user"><i>JM</i> Johan M.</span></header>
+  <main class="page-content"><div class="page-heading"><div><h1>Settings</h1><p>Configure monitoring, notifications, and your workspace.</p></div><button class="primary-button" (click)="save()">Save changes</button></div>
+    @if(saved()){<div class="success">✓ Settings saved successfully.</div>}
+    <div class="settings-layout"><aside class="settings-nav"><button class="active">General</button><button>Monitoring</button><button>Notifications</button><button>Security</button></aside>
+      <div class="settings-content">
+        <section class="card settings-card"><h2>Monitoring</h2><p class="section-help">Control how often devices are checked across your network.</p><div class="form-grid"><label>Ping interval <span>How frequently devices are checked</span><div><input type="number" [(ngModel)]="monitoringInterval" min="10"><b>seconds</b></div></label><label>Timeout <span>Wait time before marking a check as failed</span><div><input type="number" [(ngModel)]="timeout" min="1"><b>seconds</b></div></label></div></section>
+        <section class="card settings-card"><h2>Notifications</h2><p class="section-help">Choose where critical device and threshold alerts are delivered.</p><div class="setting-row"><div><strong>Email alerts</strong><span>Send alerts to your configured email recipients</span></div><button class="toggle" [class.on]="emailAlerts" (click)="emailAlerts=!emailAlerts"><i></i></button></div><div class="setting-row"><div><strong>Telegram alerts</strong><span>Send instant notifications to a Telegram channel</span></div><button class="toggle" [class.on]="telegramAlerts" (click)="telegramAlerts=!telegramAlerts"><i></i></button></div></section>
+        <section class="card settings-card"><h2>Maintenance mode</h2><p class="section-help">Pause alerts while planned maintenance is in progress.</p><div class="setting-row"><div><strong>Suppress alerts</strong><span>Monitoring continues, but no alert notifications will be sent</span></div><button class="toggle" [class.on]="maintenanceMode" (click)="maintenanceMode=!maintenanceMode"><i></i></button></div></section>
+      </div>
+    </div>
+  </main>
+</div>

@@ -1,80 +1,65 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NetworkMonitor.Application.Common.Models;
 using NetworkMonitor.Application.DTOs;
+using NetworkMonitor.Application.Features.Dashboard;
 using NetworkMonitor.Application.Features.Monitoring.Queries;
+using NetworkMonitor.Domain.Enums;
 
 namespace NetworkMonitor.API.Controllers;
 
 [ApiController]
 [Authorize]
 [Route("api/monitoring")]
-public class MonitoringController : ControllerBase
+public class MonitoringController(ISender sender) : ControllerBase
 {
-    private readonly IMonitoringQueryService _monitoringQueryService;
-
-    public MonitoringController(IMonitoringQueryService monitoringQueryService)
-    {
-        _monitoringQueryService = monitoringQueryService;
-    }
-
-    /// <summary>Current online/offline status for every device — the main dashboard summary.</summary>
     [HttpGet("status")]
-    [ProducesResponseType(typeof(IReadOnlyList<DeviceStatusDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyList<DeviceStatusDto>>> GetCurrentStatus(CancellationToken ct)
-    {
-        var statuses = await _monitoringQueryService.GetCurrentStatusesAsync(ct);
-        return Ok(statuses);
-    }
+    public async Task<ActionResult<IReadOnlyList<DeviceStatusDto>>> GetCurrentStatus(CancellationToken ct) =>
+        Ok(await sender.Send(new GetDeviceStatusQuery(), ct));
 
-    /// <summary>Ping history for a device, used to render uptime/latency charts.</summary>
     [HttpGet("devices/{deviceId:guid}/ping-history")]
-    [ProducesResponseType(typeof(IReadOnlyList<PingResultDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyList<PingResultDto>>> GetPingHistory(
-        Guid deviceId,
-        [FromQuery] DateTimeOffset? from,
-        [FromQuery] DateTimeOffset? to,
-        CancellationToken ct)
+    public async Task<ActionResult<IReadOnlyList<PingHistoryPointDto>>> GetPingHistory(Guid deviceId,
+        [FromQuery] DateTime? from, [FromQuery] DateTime? to, CancellationToken ct)
     {
-        var history = await _monitoringQueryService.GetPingHistoryAsync(deviceId, from, to, ct);
-        return Ok(history);
+        var (start, end) = GetRange(from, to);
+        return Ok(await sender.Send(new GetPingHistoryQuery(deviceId, start, end), ct));
     }
 
-    /// <summary>CPU/RAM sample history for a device, pulled via SNMP by the worker.</summary>
     [HttpGet("devices/{deviceId:guid}/resource-history")]
-    [ProducesResponseType(typeof(IReadOnlyList<ResourceSampleDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyList<ResourceSampleDto>>> GetResourceHistory(
-        Guid deviceId,
-        [FromQuery] DateTimeOffset? from,
-        [FromQuery] DateTimeOffset? to,
-        CancellationToken ct)
+    public async Task<ActionResult<IReadOnlyList<ResourceHistoryPointDto>>> GetResourceHistory(Guid deviceId,
+        [FromQuery] DateTime? from, [FromQuery] DateTime? to, CancellationToken ct)
     {
-        var history = await _monitoringQueryService.GetResourceHistoryAsync(deviceId, from, to, ct);
-        return Ok(history);
+        var (start, end) = GetRange(from, to);
+        return Ok(await sender.Send(new GetResourceHistoryQuery(deviceId, start, end), ct));
     }
 
-    /// <summary>Aggregated numbers for the dashboard header (device count, % online, active alerts, etc.).</summary>
-    [HttpGet("summary")]
-    [ProducesResponseType(typeof(DashboardSummaryDto), StatusCodes.Status200OK)]
-    public async Task<ActionResult<DashboardSummaryDto>> GetSummary(CancellationToken ct)
-    {
-        var summary = await _monitoringQueryService.GetDashboardSummaryAsync(ct);
-        return Ok(summary);
-    }
+    [HttpGet("dashboard/summary")]
+    public async Task<ActionResult<DashboardSummaryDto>> GetSummary(CancellationToken ct) =>
+        Ok(await sender.Send(new GetDashboardSummaryQuery(), ct));
 
-    /// <summary>Structured event log (online→offline transitions, config changes, etc.), paged and filterable.</summary>
     [HttpGet("events")]
-    [ProducesResponseType(typeof(PagedResult<EventLogDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<PagedResult<EventLogDto>>> GetEventLog(
-        [FromQuery] Guid? deviceId,
-        [FromQuery] string? eventType,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 50,
-        CancellationToken ct = default)
+    public async Task<ActionResult<PagedResult<EventLogDto>>> GetEventLog([FromQuery] Guid? deviceId,
+        [FromQuery] string? eventType, [FromQuery] DateTime? from, [FromQuery] DateTime? to,
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 25, CancellationToken ct = default)
     {
-        pageSize = Math.Clamp(pageSize, 1, 200);
-        page = Math.Max(page, 1);
+        if (!TryParseEventType(eventType, out var parsedEventType)) return ValidationProblem("EventType is not valid.");
+        return Ok(await sender.Send(new GetEventLogQuery(Math.Max(page, 1), Math.Clamp(pageSize, 1, 100), deviceId,
+            parsedEventType, from, to), ct));
+    }
 
-        var result = await _monitoringQueryService.GetEventLogAsync(deviceId, eventType, page, pageSize, ct);
-        return Ok(result);
+    private static (DateTime Start, DateTime End) GetRange(DateTime? from, DateTime? to)
+    {
+        var end = to?.ToUniversalTime() ?? DateTime.UtcNow;
+        return (from?.ToUniversalTime() ?? end.AddDays(-7), end);
+    }
+
+    private static bool TryParseEventType(string? eventType, out EventType? value)
+    {
+        value = null;
+        if (string.IsNullOrWhiteSpace(eventType)) return true;
+        if (!Enum.TryParse<EventType>(eventType, true, out var parsed) || !Enum.IsDefined(parsed)) return false;
+        value = parsed;
+        return true;
     }
 }

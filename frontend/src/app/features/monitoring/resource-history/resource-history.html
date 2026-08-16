@@ -1,1 +1,1 @@
-<p>resource-history works!</p>
+<main class="workspace-page page-content"><p><a routerLink="/devices">← Devices</a></p><h1>Resource history</h1>@if(error()){<p>{{error()}}</p>}<section class="card"><table class="data-table"><thead><tr><th>SAMPLED</th><th>CPU</th><th>MEMORY</th></tr></thead><tbody>@for(point of points();track point.sampledAt){<tr><td>{{point.sampledAt | date:'medium'}}</td><td>{{point.cpuPercent ?? '—'}}%</td><td>{{point.memoryPercent ?? '—'}}%</td></tr>}@empty{<tr><td colspan="3">No history available.</td></tr>}</tbody></table></section></main>

@@ -2,7 +2,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NetworkMonitor.Application.DTOs;
+using NetworkMonitor.Application.Interfaces;
 using NetworkMonitor.Application.Features.Alerts;
+using NetworkMonitor.Application.Common.Models;
 
 namespace NetworkMonitor.API.Controllers;
 

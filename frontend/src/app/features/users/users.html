@@ -1,1 +1,7 @@
-<p>users works!</p>
+<div class="workspace-page">
+  <header class="page-topbar"><a routerLink="/" class="page-brand">netwatch</a><nav class="page-nav"><a routerLink="/">Overview</a><a routerLink="/devices">Devices</a><a routerLink="/logs">Event log</a><a routerLink="/settings">Settings</a><a routerLink="/users" class="active">Users</a></nav><span class="page-user"><i>JM</i> Johan M.</span></header>
+  <main class="page-content"><div class="page-heading"><div><h1>Users</h1><p>Manage members and access levels for Northstar Group.</p></div><button class="primary-button">+ Invite user</button></div>
+    <div class="summary"><article><span>Total members</span><strong>4</strong></article><article><span>Administrators</span><strong>1</strong></article><article><span>Pending invitations</span><strong>1</strong></article></div>
+    <section class="card"><div class="toolbar"><input class="search-input" [(ngModel)]="query" placeholder="Search users"></div><div class="table-scroll"><table class="data-table"><thead><tr><th>USER</th><th>ROLE</th><th>LAST ACTIVE</th><th>STATUS</th><th></th></tr></thead><tbody>@for(user of filtered();track user.email){<tr><td><div class="user-cell"><i [class]="user.color">{{user.initials}}</i><span><strong>{{user.name}}</strong><small>{{user.email}}</small></span></div></td><td>{{user.role}}</td><td>{{user.lastActive}}</td><td><span class="status-pill" [class]="user.status === 'Active' ? 'status-online' : 'status-warning'">{{user.status}}</span></td><td><button class="ellipsis">•••</button></td></tr>}@empty{<tr><td colspan="5"><div class="empty-state">No users match your search.</div></td></tr>}</tbody></table></div></section>
+  </main>
+</div>

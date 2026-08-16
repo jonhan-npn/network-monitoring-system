@@ -1,87 +1,78 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NetworkMonitor.Application.Common.Models;
+using NetworkMonitor.Application.DTOs;
 using NetworkMonitor.Application.Features.Devices.Commands;
 using NetworkMonitor.Application.Features.Devices.Queries;
-using NetworkMonitor.Application.DTOs;
+using NetworkMonitor.Domain.Enums;
 
 namespace NetworkMonitor.API.Controllers;
 
 [ApiController]
 [Authorize]
 [Route("api/devices")]
-public class DevicesController : ControllerBase
+public class DevicesController(ISender sender) : ControllerBase
 {
-    private readonly IDeviceQueryService _queryService;
-    private readonly IDeviceCommandService _commandService;
-
-    public DevicesController(IDeviceQueryService queryService, IDeviceCommandService commandService)
-    {
-        _queryService = queryService;
-        _commandService = commandService;
-    }
-
-    /// <summary>Lists devices, optionally filtered by type or free-text search.</summary>
     [HttpGet]
-    [ProducesResponseType(typeof(IReadOnlyList<DeviceDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyList<DeviceDto>>> GetAll(
-        [FromQuery] string? search,
-        [FromQuery] string? type,
-        CancellationToken ct)
+    public async Task<ActionResult<PagedResult<DeviceListItemDto>>> GetAll([FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25, [FromQuery] string? search = null, [FromQuery] string? type = null,
+        [FromQuery] bool? isMonitored = null, CancellationToken ct = default)
     {
-        var devices = await _queryService.GetDevicesAsync(search, type, ct);
-        return Ok(devices);
+        if (!TryParseDeviceType(type, out var deviceType)) return ValidationProblem("Type is not a valid device type.");
+        return Ok(await sender.Send(new GetDevicesQuery(Math.Max(page, 1), Math.Clamp(pageSize, 1, 100), search, deviceType, isMonitored), ct));
     }
 
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(DeviceDetailDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<DeviceDetailDto>> GetById(Guid id, CancellationToken ct)
-    {
-        var device = await _queryService.GetDeviceByIdAsync(id, ct);
-        return device is null ? NotFound() : Ok(device);
-    }
+    public async Task<ActionResult<DeviceDto>> GetById(Guid id, CancellationToken ct) => Ok(await sender.Send(new GetDeviceByIdQuery(id), ct));
 
-    /// <summary>Adds a new switch/router/host to the inventory. Ping monitoring for it starts on the next worker cycle.</summary>
     [HttpPost]
     [Authorize(Policy = "OperatorOrAdmin")]
-    [ProducesResponseType(typeof(DeviceDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<DeviceDto>> Create([FromBody] CreateDeviceRequest request, CancellationToken ct)
+    public async Task<ActionResult<DeviceDto>> Create(DeviceRequest request, CancellationToken ct)
     {
-        var created = await _commandService.CreateAsync(request, ct);
+        if (!TryParseDeviceType(request.DeviceType, out var type)) return ValidationProblem("DeviceType is required and must be valid.");
+        var created = await sender.Send(ToCreateCommand(request, type), ct);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
     [HttpPut("{id:guid}")]
     [Authorize(Policy = "OperatorOrAdmin")]
-    [ProducesResponseType(typeof(DeviceDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<DeviceDto>> Update(Guid id, [FromBody] UpdateDeviceRequest request, CancellationToken ct)
+    public async Task<ActionResult<DeviceDto>> Update(Guid id, DeviceRequest request, CancellationToken ct)
     {
-        var updated = await _commandService.UpdateAsync(id, request, ct);
-        return updated is null ? NotFound() : Ok(updated);
+        if (!TryParseDeviceType(request.DeviceType, out var type)) return ValidationProblem("DeviceType is required and must be valid.");
+        return Ok(await sender.Send(new UpdateDeviceCommand(id, request.Name, request.IpAddress, type, request.Location,
+            request.Description, request.SnmpCommunity, request.SnmpPort, request.SnmpVersion, request.SshPort,
+            request.SshUsername, request.SshCredentialRef), ct));
+    }
+
+    [HttpPatch("{id:guid}/monitoring")]
+    [Authorize(Policy = "OperatorOrAdmin")]
+    public async Task<IActionResult> SetMonitoring(Guid id, SetMonitoringRequest request, CancellationToken ct)
+    {
+        await sender.Send(new SetDeviceMonitoringCommand(id, request.IsMonitored), ct);
+        return NoContent();
     }
 
     [HttpDelete("{id:guid}")]
     [Authorize(Policy = "AdminOnly")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
-        var deleted = await _commandService.DeleteAsync(id, ct);
-        return deleted ? NoContent() : NotFound();
+        await sender.Send(new DeleteDeviceCommand(id), ct);
+        return NoContent();
     }
 
-    /// <summary>Triggers an immediate out-of-band ping, useful for "test connection" buttons in the Angular device form.</summary>
-    [HttpPost("{id:guid}/ping-now")]
-    [ProducesResponseType(typeof(PingResultDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PingResultDto>> PingNow(Guid id, CancellationToken ct)
+    private static CreateDeviceCommand ToCreateCommand(DeviceRequest r, DeviceType type) => new(r.Name, r.IpAddress, type,
+        r.Location, r.Description, r.SnmpCommunity, r.SnmpPort, r.SnmpVersion, r.SshPort, r.SshUsername, r.SshCredentialRef);
+    private static bool TryParseDeviceType(string? type, out DeviceType value)
     {
-        var result = await _commandService.PingNowAsync(id, ct);
-        return result is null ? NotFound() : Ok(result);
+        value = default;
+        return !string.IsNullOrWhiteSpace(type)
+            && Enum.TryParse(type, true, out value)
+            && Enum.IsDefined(value);
     }
 }
 
-public record CreateDeviceRequest(string Name, string IpAddress, string Type, string? SnmpCommunity, string? SshUsername, string? SshPassword, int? SshPort);
-public record UpdateDeviceRequest(string Name, string IpAddress, string Type, string? SnmpCommunity, string? SshUsername, string? SshPassword, int? SshPort, bool IsMonitoringEnabled);
+public record DeviceRequest(string Name, string IpAddress, string DeviceType, string? Location, string? Description,
+    string SnmpCommunity = "public", int SnmpPort = 161, string SnmpVersion = "2c", int SshPort = 22,
+    string? SshUsername = null, string? SshCredentialRef = null);
+public record SetMonitoringRequest(bool IsMonitored);

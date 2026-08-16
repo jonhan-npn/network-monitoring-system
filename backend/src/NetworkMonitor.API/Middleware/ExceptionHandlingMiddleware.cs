@@ -1,6 +1,6 @@
 using System.Net;
 using System.Text.Json;
-using NetworkMonitor.Shared.Exceptions;
+using NetworkMonitor.Application.Common.Exceptions;
 
 namespace NetworkMonitor.API.Middleware;
 
@@ -42,8 +42,8 @@ public class ExceptionHandlingMiddleware
         var (statusCode, title) = exception switch
         {
             NotFoundException => (HttpStatusCode.NotFound, "Resource not found"),
-            ValidationException => (HttpStatusCode.BadRequest, "Validation failed"),
-            UnauthorizedAccessException => (HttpStatusCode.Unauthorized, "Unauthorized"),
+            AppValidationException => (HttpStatusCode.BadRequest, "Validation failed"),
+            AppAuthenticationException => (HttpStatusCode.Unauthorized, "Unauthorized"),
             ConflictException => (HttpStatusCode.Conflict, "Conflict"),
             _ => (HttpStatusCode.InternalServerError, "An unexpected error occurred")
         };

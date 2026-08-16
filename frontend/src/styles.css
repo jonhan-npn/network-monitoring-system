@@ -1,3 +1,34 @@
-/* You can add global styles to this file, and also import other style files */
-
 @import 'tailwindcss';
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: #f8f8fb; color: #202239; font-family: 'DM Sans', Arial, sans-serif; }
+button { cursor: pointer; }
+
+.workspace-page { min-height: 100dvh; background: #f8f8fb; }
+.page-topbar { height: 70px; padding: 0 5.5%; display: flex; align-items: center; justify-content: space-between; background: #fff; border-bottom: 1px solid #e9e8f0; }
+.page-brand { color: #282a42; font: 700 22px Outfit, Arial, sans-serif; text-decoration: none; letter-spacing: -1px; }
+.page-brand::before { content: '▰'; display: inline-grid; place-items: center; width: 25px; height: 25px; margin-right: 9px; border-radius: 7px; color: #fff; background: #7658ef; font-size: 12px; vertical-align: 1px; }
+.page-nav { display: flex; align-items: center; gap: 4px; }
+.page-nav a { color: #777a91; text-decoration: none; padding: 8px 11px; border-radius: 6px; font-size: 13px; font-weight: 600; }
+.page-nav a.active, .page-nav a:hover { color: #6547e7; background: #f0edff; }
+.page-user { display: flex; gap: 9px; align-items: center; color: #5e6074; font-size: 12px; }
+.page-user i { width: 31px; height: 31px; border-radius: 50%; background: linear-gradient(135deg,#f2bb90,#8c5035); color: white; display: grid; place-items: center; font-style: normal; font-weight: 700; }
+.page-content { max-width: 1320px; margin: auto; padding: 37px 5.5% 64px; }
+.page-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 26px; }
+.page-heading h1 { margin: 0; font: 700 27px Outfit, Arial, sans-serif; letter-spacing: -.7px; }
+.page-heading p { margin: 6px 0 0; color: #777a91; font-size: 13px; }
+.primary-button, .secondary-button { min-height: 35px; border-radius: 7px; padding: 0 12px; font: 600 12px inherit; }
+.primary-button { border: 0; background: #7153e9; color: #fff; box-shadow: 0 2px 5px #d8d0f8; }
+.secondary-button { border: 1px solid #e3e2eb; color: #606276; background: #fff; }
+.card { background: #fff; border: 1px solid #e9e8f0; border-radius: 10px; }
+.toolbar { padding: 14px 16px; display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid #eeedf3; }
+.search-input { width: min(320px, 100%); height: 34px; padding: 0 10px; border: 1px solid #e5e4ec; border-radius: 6px; outline-color: #8b75ec; color: #32344a; font: 12px inherit; }
+.data-table { width: 100%; border-collapse: collapse; min-width: 760px; }
+.data-table th { padding: 12px 17px; text-align: left; color: #9899a7; font-size: 10px; letter-spacing: .7px; }
+.data-table td { padding: 13px 17px; border-top: 1px solid #f0eff4; color: #67697b; font-size: 12px; }
+.table-scroll { overflow: auto; }
+.status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; }
+.status-pill::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.status-online { color: #419a65; background: #e8f8ee; }.status-warning { color: #c98229; background: #fff2df; }.status-offline, .status-critical { color: #d46472; background: #ffeaec; }.status-info { color: #5382c5; background: #eaf3ff; }
+.empty-state { padding: 45px 20px; text-align: center; color: #85879a; font-size: 13px; }
+@media (max-width: 720px) { .page-topbar { height: auto; padding: 15px 18px; align-items: flex-start; }.page-nav { flex-wrap: wrap; justify-content: flex-end; }.page-nav a { padding: 5px 7px; font-size: 11px; }.page-user { display:none; }.page-content { padding: 26px 18px 50px; }.page-heading { align-items: stretch; flex-direction: column; }.page-heading .primary-button { width: 100%; } }

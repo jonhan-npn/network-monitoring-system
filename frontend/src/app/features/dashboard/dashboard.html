@@ -1,1 +1,42 @@
-<p>dashboard works!</p>
+<div class="shell" [class.menu-open]="sidebarOpen()">
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark"><i></i><i></i><i></i></span><span>netwatch</span></div>
+    <button class="workspace"><span class="workspace-avatar">N</span><span><strong>Northstar Group</strong><small>Enterprise plan</small></span><b>⌄</b></button>
+    <nav>
+      <p class="nav-label">MONITORING</p>
+      @for (item of primaryNav; track item.label) {
+        <button class="nav-item" [class.active]="activeNav() === item.label" (click)="selectNav(item.label)"><span class="nav-icon" [attr.data-icon]="item.icon"></span>{{ item.label }} @if (item.badge) { <em>{{ item.badge }}</em> }</button>
+      }
+      <p class="nav-label spaced">MANAGEMENT</p>
+      @for (item of secondaryNav; track item.label) {
+        <button class="nav-item" [class.active]="activeNav() === item.label" (click)="selectNav(item.label)"><span class="nav-icon" [attr.data-icon]="item.icon"></span>{{ item.label }}</button>
+      }
+    </nav>
+    <div class="sidebar-bottom"><div class="support"><span>?</span><div><strong>Need help?</strong><small>Visit support center</small></div></div><button class="profile"><span class="avatar">JM</span><span><strong>Johan M.</strong><small>Administrator</small></span><b>⋮</b></button></div>
+  </aside>
+
+  <main>
+    <header>
+      <button class="mobile-menu" (click)="sidebarOpen.set(!sidebarOpen())">☰</button>
+      <div class="crumb"><span>Monitoring</span><b>/</b><strong>Overview</strong></div>
+      <div class="header-actions"><button class="search">⌕ <span>Search anything...</span><kbd>⌘ K</kbd></button><button class="icon-button">☀</button><button class="notification">♧<i></i></button></div>
+    </header>
+    <section class="content">
+      <div class="welcome-row"><div><p class="eyebrow">SUNDAY, AUGUST 2</p><h1>Good morning, Johan <span>✦</span></h1><p class="subtext">Here’s what’s happening across your network.</p></div><div class="live-status"><span class="pulse"></span> All systems operational <button>View status</button></div></div>
+
+      <div class="stats-grid">
+        <article class="stat-card"><div class="stat-head"><span class="card-icon devices">▣</span><button>•••</button></div><p>Total devices</p><div class="stat-value">48 <span class="up">↗ 12.5%</span></div><small>vs. previous 30 days</small><div class="mini-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></article>
+        <article class="stat-card"><div class="stat-head"><span class="card-icon online">◉</span><button>•••</button></div><p>Devices online</p><div class="stat-value">44 <span class="up">91.7%</span></div><small>4 devices need attention</small><div class="status-track"><i class="online-bar"></i><i class="warning-bar"></i><i class="offline-bar"></i></div></article>
+        <article class="stat-card"><div class="stat-head"><span class="card-icon alerts">♢</span><button>•••</button></div><p>Active alerts</p><div class="stat-value">3 <span class="down">↘ 40%</span></div><small>vs. previous 24 hours</small><div class="alert-dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></article>
+        <article class="stat-card"><div class="stat-head"><span class="card-icon uptime">⌁</span><button>•••</button></div><p>Network uptime</p><div class="stat-value">99.98<span class="unit">%</span></div><small>Last 30 days</small><div class="uptime-line"><svg viewBox="0 0 260 44" preserveAspectRatio="none"><path d="M0 31 C15 31 16 10 29 24 S48 31 58 26 S72 8 87 26 S109 31 121 18 S139 23 151 18 S167 33 181 23 S195 9 211 19 S233 27 260 8"/></svg></div></article>
+      </div>
+
+      <div class="dashboard-grid">
+        <article class="panel performance"><div class="panel-head"><div><h2>Network performance</h2><p>Average response time across all devices</p></div><div class="panel-actions"><div class="segmented">@for (range of ['1H','6H','24H','7D']; track range) { <button [class.selected]="selectedRange() === range" (click)="setRange(range)">{{range}}</button> }</div><button class="more">•••</button></div></div><div class="chart-legend"><span><i class="dot purple"></i>Response time</span><strong>12.4 <small>ms avg.</small></strong></div><div class="line-chart"><div class="y-axis"><span>40ms</span><span>30ms</span><span>20ms</span><span>10ms</span><span>0ms</span></div><svg viewBox="0 0 700 220" preserveAspectRatio="none"><defs><linearGradient id="fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#7c5cfc" stop-opacity=".25"/><stop offset="1" stop-color="#7c5cfc" stop-opacity="0"/></linearGradient></defs><path class="grid-line" d="M0 12H700M0 62H700M0 112H700M0 162H700M0 212H700"/><path class="area" d="M0 153 C27 149 34 130 58 141 S88 172 110 143 S138 121 161 139 S193 155 216 118 S250 135 271 109 S305 141 326 117 S361 65 382 105 S419 143 440 123 S477 90 496 114 S531 153 552 129 S582 94 605 117 S635 142 654 96 S678 113 700 74 V220 H0Z"/><path class="line" d="M0 153 C27 149 34 130 58 141 S88 172 110 143 S138 121 161 139 S193 155 216 118 S250 135 271 109 S305 141 326 117 S361 65 382 105 S419 143 440 123 S477 90 496 114 S531 153 552 129 S582 94 605 117 S635 142 654 96 S678 113 700 74"/><circle cx="382" cy="105" r="5"/></svg><div class="x-axis"><span>00:00</span><span>04:00</span><span>08:00</span><span>12:00</span><span>16:00</span><span>20:00</span><span>Now</span></div></div></article>
+        <article class="panel health"><div class="panel-head"><div><h2>Device health</h2><p>Current status distribution</p></div><button class="more">•••</button></div><div class="donut-wrap"><div class="donut"><div><strong>48</strong><span>Devices</span></div></div><ul><li><i class="dot green"></i><span>Online</span><strong>44</strong></li><li><i class="dot amber"></i><span>Warning</span><strong>2</strong></li><li><i class="dot red"></i><span>Offline</span><strong>2</strong></li></ul></div><button class="view-report">View device report <span>→</span></button></article>
+      </div>
+
+      <article class="panel device-panel"><div class="panel-head"><div><h2>Device overview</h2><p>Your recently monitored devices</p></div><div class="panel-actions"><button class="filter">☷ Filter</button><button class="primary">+ Add device</button></div></div><div class="table-wrap"><table><thead><tr><th>DEVICE</th><th>LOCATION</th><th>IP ADDRESS</th><th>STATUS</th><th>RESPONSE TIME</th><th></th></tr></thead><tbody>@for (device of devices; track device.ip) {<tr><td><span class="device-avatar" [class]="device.color">{{device.initials}}</span><span><strong>{{device.name}}</strong><small>{{device.type}}</small></span></td><td>{{device.location}}</td><td><code>{{device.ip}}</code></td><td><span class="status" [class]="device.status.toLowerCase()"><i></i>{{device.status}}</span></td><td [class.warn-text]="device.status === 'Warning'">{{device.latency}}</td><td><button class="row-more">•••</button></td></tr>}</tbody></table></div><div class="table-footer"><span>Showing 4 of 48 devices</span><button>View all devices <b>→</b></button></div></article>
+    </section>
+  </main>
+</div>

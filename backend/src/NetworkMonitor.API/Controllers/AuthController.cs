@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NetworkMonitor.Application.DTOs;
 using NetworkMonitor.Application.Features.Authentication;
 
 namespace NetworkMonitor.API.Controllers;
@@ -8,10 +9,10 @@ namespace NetworkMonitor.API.Controllers;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly IAuthenticationService _authenticationService;
+    private readonly GetCurrentUserQuery _authenticationService;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(IAuthenticationService authenticationService, ILogger<AuthController> logger)
+    public AuthController(GetCurrentUserQuery authenticationService, ILogger<AuthController> logger)
     {
         _authenticationService = authenticationService;
         _logger = logger;

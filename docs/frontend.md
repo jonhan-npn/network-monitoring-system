@@ -1,3 +1,4 @@
+```
 frontend/
 │
 ├── angular.json
@@ -190,3 +191,73 @@ frontend/
     └── environments/
         ├── environment.ts
         └── environment.development.ts
+
+```
+
+        # Core
+ng g guard core/guards/auth --functional
+
+ng g interceptor core/interceptors/auth
+ng g interceptor core/interceptors/error
+
+ng g service core/services/device
+ng g service core/services/monitoring
+ng g service core/services/alert
+ng g service core/services/signalr
+ng g service core/authentication/auth
+
+# Shared
+ng g component shared/components/status-badge
+ng g component shared/components/loading-spinner
+ng g component shared/components/confirm-dialog
+
+# Layouts
+ng g component layouts/admin-layout
+ng g component layouts/admin-layout/sidebar
+ng g component layouts/admin-layout/topbar
+ng g component layouts/auth-layout
+
+# Dashboard
+ng g component features/dashboard
+ng g component features/dashboard/charts/device-status-chart
+ng g component features/dashboard/charts/response-time-chart
+ng g component features/dashboard/charts/resource-usage-chart
+
+# Devices
+ng g component features/devices/device-list
+ng g component features/devices/device-form
+ng g component features/devices/device-detail
+
+# Monitoring
+ng g component features/monitoring/ping-history
+ng g component features/monitoring/resource-history
+
+# Alerts
+ng g component features/alerts/alert-rules
+ng g component features/alerts/alert-history
+
+# Users
+ng g component features/users
+
+# Logs
+ng g component features/logs/event-log-viewer
+
+# Settings
+ng g component features/settings
+
+# Authentication
+ng g component features/authentication/login
+ng g component features/authentication/register
+
+mkdir -p src/app/core/models
+mkdir -p src/app/shared/directives
+mkdir -p src/app/shared/pipes
+mkdir -p src/app/shared/utils
+mkdir -p src/environments
+
+touch src/app/core/models/device.model.ts
+touch src/app/core/models/ping-result.model.ts
+touch src/app/core/models/event-log.model.ts
+
+touch src/environments/environment.ts
+touch src/environments/environment.prod.ts

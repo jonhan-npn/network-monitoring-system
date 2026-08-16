@@ -1,1 +1,7 @@
-// TODO: Implement AlertChannel.cs
+namespace NetworkMonitor.Domain.Enums;
+
+public enum AlertChannel
+{
+    Email,
+    Telegram
+}
