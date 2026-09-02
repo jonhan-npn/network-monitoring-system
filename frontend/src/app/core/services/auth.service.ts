@@ -3,16 +3,18 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 
-
 import { environment } from '../../../environments/environment';
-import { AuthResponse, AuthUser, LoginRequest, RegisterRequest } from '../models/auth.model';
+import {
+  AuthResponse,
+  AuthUser,
+  LoginRequest,
+  RegisterRequest,
+} from '../models/auth.model';
 
 const TOKEN_KEY = 'nm_token';
 const USER_KEY = 'nm_user';
 
-@Injectable({ 
-    providedIn: 'root' 
-})
+@Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly apiUrl = `${environment.apiUrl}/auth`;
 

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿dotnet run --project src/NetworkMonitor.Application/NetworkMonitor.Application.csproj<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\NetworkMonitor.Domain\NetworkMonitor.Domain.csproj" />

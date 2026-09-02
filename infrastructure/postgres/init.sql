@@ -126,12 +126,12 @@ CREATE INDEX idx_alert_rules_device ON alert_rules (device_id);
 -- Seed: a default admin user for first login.
 -- Password is "ChangeMe123!" hashed with BCrypt — CHANGE THIS IMMEDIATELY
 -- after first login in any non-local environment.
--- Hash below corresponds to "ChangeMe123!" — regenerate for real deployments.
+-- Hash below corresponds to "ChangeMe123!" — regenerate for real deployments. 2a$11$K9m1n7l8v0nQeJt2G8V0UOe6y2b0m1jv6r0m0m2G3n7h8i9j0k1l2
 -- ----------------------------------------------------------------------------
 INSERT INTO users (username, email, password_hash, role)
 VALUES (
     'admin',
     'admin@gmail.com',
-    '$2a$11$K9m1n7l8v0nQeJt2G8V0UOe6y2b0m1jv6r0m0m2G3n7h8i9j0k1l2',
+    '$Admin@123',
     'Admin'
 );
