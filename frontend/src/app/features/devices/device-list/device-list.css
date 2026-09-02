@@ -1,1 +1,92 @@
-.filters{display:flex;gap:5px}.filters button{border:0;background:transparent;color:#85879a;font:600 11px inherit;padding:5px 8px;border-radius:5px}.filters button.selected{background:#f0edff;color:#6547e7}.device-cell{display:flex;align-items:center;gap:9px;color:#303248}.device-cell strong,.device-cell small{display:block}.device-cell strong{font-size:12px}.device-cell small{font-size:10px;color:#999aa7;margin-top:3px}.device-icon{width:29px;height:29px;border-radius:7px;display:grid;place-items:center;background:#eeeaff;color:#6c50e7;font-size:11px;font-weight:700}code{font:11px inherit;color:#727486}.slow{color:#c8822d!important}.ellipsis{border:0;background:transparent;color:#9394a2}.table-footer{min-height:48px;padding:0 17px;display:flex;justify-content:space-between;align-items:center;color:#9697a5;font-size:11px;border-top:1px solid #f0eff4}@media(max-width:650px){.toolbar{flex-direction:column}.filters{overflow:auto}.filters button{white-space:nowrap}}
+.filters {
+  display: flex;
+  gap: 5px;
+}
+
+.filters button {
+  border: 0;
+  background: transparent;
+  color: #85879a;
+  font: 600 11px inherit;
+  padding: 5px 8px;
+  border-radius: 5px;
+}
+
+.filters button.selected {
+  background: #f0edff;
+  color: #6547e7;
+}
+
+.device-cell {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #303248;
+}
+
+.device-cell strong,
+.device-cell small {
+  display: block;
+}
+
+.device-cell strong {
+  font-size: 12px;
+}
+
+.device-cell small {
+  font-size: 10px;
+  color: #999aa7;
+  margin-top: 3px;
+}
+
+.device-icon {
+  width: 29px;
+  height: 29px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  background: #eeeaff;
+  color: #6c50e7;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+code {
+  font: 11px inherit;
+  color: #727486;
+}
+
+.slow {
+  color: #c8822d !important;
+}
+
+.ellipsis {
+  border: 0;
+  background: transparent;
+  color: #9394a2;
+}
+
+.table-footer {
+  min-height: 48px;
+  padding: 0 17px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #9697a5;
+  font-size: 11px;
+  border-top: 1px solid #f0eff4;
+}
+
+@media (max-width: 650px) {
+  .toolbar {
+    flex-direction: column;
+  }
+
+  .filters {
+    overflow: auto;
+  }
+
+  .filters button {
+    white-space: nowrap;
+  }
+}
