@@ -1,1 +1,152 @@
-<main class="workspace-page page-content"><p><a routerLink="/devices">← Devices</a></p><h1>Ping history</h1>@if(error()){<p>{{error()}}</p>}<section class="card"><table class="data-table"><thead><tr><th>CHECKED</th><th>STATUS</th><th>LATENCY</th></tr></thead><tbody>@for(point of points();track point.checkedAt){<tr><td>{{point.checkedAt | date:'medium'}}</td><td>{{point.isOnline ? 'Online' : 'Offline'}}</td><td>{{point.latencyMs ?? '—'}} ms</td></tr>}@empty{<tr><td colspan="3">No history available.</td></tr>}</tbody></table></section></main>
+<div class="page">
+  <div class="page-head">
+    <div>
+      <a [routerLink]="['/devices', id]" class="back-link">← {{ deviceName() }}</a>
+      <p class="eyebrow">Monitoring</p>
+      <h1 class="page-title">Ping history</h1>
+      <p class="page-subtitle">Latency and availability samples collected by the monitoring worker.</p>
+    </div>
+
+    <div class="row">
+      <div class="segmented">
+        @for (option of ranges; track option.label) {
+          <button type="button" [class.selected]="range() === option.label" (click)="setRange(option.label)">
+            {{ option.label }}
+          </button>
+        }
+      </div>
+      <a [routerLink]="['/devices', id, 'resource-history']" class="btn btn-secondary">Resource history →</a>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="empty">
+      <strong>{{ error() }}</strong>
+      <button type="button" class="btn btn-secondary btn-sm" (click)="load()">Retry</button>
+    </div>
+  } @else if (loading()) {
+    <div class="skeleton" style="height: 96px; margin-bottom: 18px"></div>
+    <div class="skeleton" style="height: 300px"></div>
+  } @else if (stats(); as stats) {
+    <div class="stat-grid">
+      <article class="stat">
+        <div>
+          <p class="stat-label">Availability</p>
+          <p class="stat-value">{{ stats.availability }}<small>%</small></p>
+          <p class="stat-foot">{{ stats.samples }} samples</p>
+        </div>
+        <span class="stat-icon ok">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+            <path d="M5 12.5a10 10 0 0 1 14 0" />
+            <path d="M8.5 16a5.5 5.5 0 0 1 7 0" />
+            <circle cx="12" cy="19" r="1" fill="currentColor" stroke="none" />
+          </svg>
+        </span>
+      </article>
+
+      <article class="stat">
+        <div>
+          <p class="stat-label">Packet loss</p>
+          <p class="stat-value">{{ stats.loss }}<small>%</small></p>
+          <p class="stat-foot">{{ stats.samples }} checks in range</p>
+        </div>
+        <span class="stat-icon danger">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </span>
+      </article>
+
+      <article class="stat">
+        <div>
+          <p class="stat-label">Average latency</p>
+          <p class="stat-value">{{ latency(stats.average) }}</p>
+          <p class="stat-foot">Min {{ latency(stats.min) }} · Max {{ latency(stats.max) }}</p>
+        </div>
+        <span class="stat-icon brand">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+            <path d="M4 17l6-6 4 4 6-8" />
+          </svg>
+        </span>
+      </article>
+
+      <article class="stat">
+        <div>
+          <p class="stat-label">Latest result</p>
+          <p class="stat-value" style="font-size: 20px">
+            {{ recent()[0]?.isOnline ? 'Online' : 'Offline' }}
+          </p>
+          <p class="stat-foot">{{ recent()[0]?.checkedAt | date: 'medium' }}</p>
+        </div>
+        <span class="stat-icon info">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 2" />
+          </svg>
+        </span>
+      </article>
+    </div>
+
+    <section class="panel" style="margin-top: 20px">
+      <div class="panel-head">
+        <div>
+          <h2 class="panel-title">Latency over time</h2>
+          <p class="panel-sub">Averaged into readable buckets; gaps are failed pings.</p>
+        </div>
+      </div>
+      <div class="panel-body">
+        <app-line-chart
+          [series]="chart().series"
+          [labels]="chart().labels"
+          [ySuffix]="' ms'"
+          [height]="280"
+          emptyLabel="No ping samples in this period yet."
+        />
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top: 20px">
+      <div class="panel-head">
+        <div>
+          <h2 class="panel-title">Recent samples</h2>
+          <p class="panel-sub">Up to 100 most recent results, newest first.</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Checked at</th>
+              <th>Result</th>
+              <th>Latency</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (point of recent(); track $index) {
+              <tr>
+                <td>{{ point.checkedAt | date: 'medium' }}</td>
+                <td>
+                  <span class="badge" [class]="point.isOnline ? 'badge-ok' : 'badge-danger'">
+                    {{ point.isOnline ? 'Online' : 'Offline' }}
+                  </span>
+                </td>
+                <td class="num">{{ latency(point.latencyMs) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  } @else {
+    <div class="empty">
+      <span class="empty-icon">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <path d="M3 12h4l3 8 4-16 3 8h4" />
+        </svg>
+      </span>
+      <strong>No ping samples yet</strong>
+      <span>The worker records a result every 30 seconds while the device is monitored.</span>
+      <a [routerLink]="['/devices', id]" class="btn btn-secondary btn-sm">Back to device</a>
+    </div>
+  }
+</div>

@@ -35,10 +35,9 @@ public class RealtimeNotifierSettings
 /// from ASP.NET Core's SignalR hosting types entirely — it only knows HTTP.
 ///
 /// Registered as a typed HttpClient in DependencyInjection.AddInfrastructure;
-/// the corresponding API-side controller is part of NetworkMonitor.API
-/// (not yet built as of this file — wire up a controller there that
-/// validates X-Internal-Secret and calls the hub context for each of the
-/// three notification types below before deploying the Worker for real).
+/// the corresponding API-side controller is
+/// NetworkMonitor.API.Controllers.InternalNotificationsController, which
+/// validates X-Internal-Secret and forwards each payload to the hub context.
 /// </summary>
 public class HttpRealtimeNotifier : IRealtimeNotifier
 {

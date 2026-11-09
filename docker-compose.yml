@@ -1,114 +1,5 @@
-# name: netmon
-
-# services:
-#   postgres:
-#     image: postgres:16-alpine
-#     container_name: netmonitor-postgres
-#     restart: unless-stopped
-#     environment:
-#       POSTGRES_USER: ${POSTGRES_USER:-netmon}
-#       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-netmon_pass}
-#       POSTGRES_DB: ${POSTGRES_DB:-netmon_db}
-#     ports:
-#       - "5432:5432"
-#     volumes:
-#       - postgres_data:/var/lib/postgresql/data
-#       - ./db/init:/docker-entrypoint-initdb.d:ro
-#     healthcheck:
-#       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-netmon} -d ${POSTGRES_DB:-netmon_db}"]
-#       interval: 5s
-#       timeout: 5s
-#       retries: 10
-#     networks:
-#       - netmon-net
-
-#   pgadmin:
-#     image: dpage/pgadmin4:latest
-#     container_name: netmon-pgadmin
-#     restart: unless-stopped
-#     environment:
-#       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@netmon.local}
-#       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
-#       PGADMIN_CONFIG_SERVER_MODE: "False"
-#     ports:
-#       - "5050:80"
-#     depends_on:
-#       postgres:
-#         condition: service_healthy
-#     volumes:
-#       - pgadmin_data:/var/lib/pgadmin
-#     networks:
-#       - netmon-net
-
-#   backend:
-#     build:
-#       context: ./backend
-#       dockerfile: src/API/Dockerfile
-#     container_name: netmon-backend
-#     restart: unless-stopped
-#     environment:
-#       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
-#       ASPNETCORE_URLS: http://+:8080
-#       ConnectionStrings__Default: Host=postgres;Port=5432;Database=${POSTGRES_DB:-netmon_db};Username=${POSTGRES_USER:-netmon};Password=${POSTGRES_PASSWORD:-netmon_pass}
-#       Jwt__Secret: ${JWT_SECRET:?JWT_SECRET must be set}
-#       Jwt__Issuer: ${JWT_ISSUER:-netmon-api}
-#       Jwt__Audience: ${JWT_AUDIENCE:-netmon-client}
-#       Jwt__AccessTokenMinutes: ${JWT_ACCESS_MINUTES:-15}
-#       Jwt__RefreshTokenDays: ${JWT_REFRESH_DAYS:-7}
-#     ports:
-#       - "5000:8080"
-#     depends_on:
-#       postgres:
-#         condition: service_healthy
-#     networks:
-#       - netmon-net
-
-#   worker:
-#     build:
-#       context: ./backend
-#       dockerfile: src/Worker/Dockerfile
-#     container_name: netmon-worker
-#     restart: unless-stopped
-#     environment:
-#       DOTNET_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
-#       ConnectionStrings__Default: Host=postgres;Port=5432;Database=${POSTGRES_DB:-netmon_db};Username=${POSTGRES_USER:-netmon};Password=${POSTGRES_PASSWORD:-netmon_pass}
-#       Monitoring__PollIntervalSeconds: ${POLL_INTERVAL_SECONDS:-30}
-#       Smtp__Host: ${SMTP_HOST:-}
-#       Smtp__Port: ${SMTP_PORT:-587}
-#       Smtp__User: ${SMTP_USER:-}
-#       Smtp__Password: ${SMTP_PASSWORD:-}
-#       Telegram__BotToken: ${TELEGRAM_BOT_TOKEN:-}
-#       Telegram__ChatId: ${TELEGRAM_CHAT_ID:-}
-#     depends_on:
-#       postgres:
-#         condition: service_healthy
-#     networks:
-#       - netmon-net
-
-#   frontend:
-#     build:
-#       context: ./frontend
-#       dockerfile: Dockerfile
-#       args:
-#         API_BASE_URL: ${API_BASE_URL:-http://localhost:5000}
-#     container_name: netmon-frontend
-#     restart: unless-stopped
-#     ports:
-#       - "4200:80"
-#     depends_on:
-#       - backend
-#     networks:
-#       - netmon-net
-
-# networks:
-#   netmon-net:
-#     driver: bridge
-
-# volumes:
-#   postgres_data:
-#   pgadmin_data:
-
-version: "3.9"
+# Docker Compose for the full stack: PostgreSQL + API + Worker + frontend (Nginx).
+# All configuration comes from .env; see .env.example.
 
 services:
   postgres:
@@ -120,7 +11,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -145,15 +36,22 @@ services:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Default: "Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
-      Jwt__Key: ${JWT_KEY}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY}
       Jwt__Issuer: ${JWT_ISSUER}
       Jwt__Audience: ${JWT_AUDIENCE}
       Jwt__ExpiryMinutes: ${JWT_EXPIRY_MINUTES}
-      MonitoringOptions__PingIntervalSeconds: ${PING_INTERVAL_SECONDS}
-      MonitoringOptions__SnmpPollIntervalSeconds: ${SNMP_POLL_INTERVAL_SECONDS}
-      MonitoringOptions__SshInventoryIntervalMinutes: ${SSH_INVENTORY_INTERVAL_MINUTES}
+      Monitoring__PingIntervalSeconds: ${PING_INTERVAL_SECONDS}
+      Monitoring__SnmpPollIntervalSeconds: ${SNMP_POLL_INTERVAL_SECONDS}
+      Monitoring__PingTimeoutMs: ${PING_TIMEOUT_MS}
+      Monitoring__OfflineThreshold: ${OFFLINE_THRESHOLD}
+      Monitoring__HistoryRetentionDays: ${HISTORY_RETENTION_DAYS}
+      # init.sql owns the day-zero schema; there are no EF migrations yet, so
+      # running MigrateAsync on startup just produces a noisy history-table error.
+      Database__MigrateOnStartup: "false"
+      # Shared secret the Worker presents to /internal/notifications/*.
+      Realtime__InternalSecret: ${REALTIME_INTERNAL_SECRET}
     ports:
-      - "${API_PORT}:8080"
+      - "${API_PORT:-5000}:8080"
     networks:
       - netmonitor-net
 
@@ -171,16 +69,18 @@ services:
     environment:
       DOTNET_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       ConnectionStrings__Default: "Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
-      PING_INTERVAL_SECONDS: ${PING_INTERVAL_SECONDS}
-      SNMP_POLL_INTERVAL_SECONDS: ${SNMP_POLL_INTERVAL_SECONDS}
-      SSH_INVENTORY_INTERVAL_MINUTES: ${SSH_INVENTORY_INTERVAL_MINUTES}
-      SMTP_HOST: ${SMTP_HOST}
-      SMTP_PORT: ${SMTP_PORT}
-      SMTP_USER: ${SMTP_USER}
-      SMTP_PASSWORD: ${SMTP_PASSWORD}
-      SMTP_FROM: ${SMTP_FROM}
-      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
-      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+      Monitoring__PingIntervalSeconds: ${PING_INTERVAL_SECONDS}
+      Monitoring__SnmpIntervalSeconds: ${SNMP_POLL_INTERVAL_SECONDS}
+      Monitoring__SshInventoryIntervalMinutes: ${SSH_INVENTORY_INTERVAL_MINUTES}
+      Monitoring__RetentionDays: ${HISTORY_RETENTION_DAYS}
+      Alerts__Smtp__Host: ${SMTP_HOST}
+      Alerts__Smtp__Port: ${SMTP_PORT}
+      Alerts__Smtp__Username: ${SMTP_USER}
+      Alerts__Smtp__Password: ${SMTP_PASSWORD}
+      Alerts__Smtp__FromAddress: ${SMTP_FROM}
+      Alerts__Telegram__BotToken: ${TELEGRAM_BOT_TOKEN}
+      Realtime__InternalApiBaseUrl: http://api:8080
+      Realtime__InternalSecret: ${REALTIME_INTERNAL_SECRET}
     networks:
       - netmonitor-net
 
@@ -193,7 +93,7 @@ services:
     depends_on:
       - api
     ports:
-      - "${FRONTEND_PORT}:80"
+      - "${FRONTEND_PORT:-80}:80"
     networks:
       - netmonitor-net
 

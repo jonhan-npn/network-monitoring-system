@@ -1,1 +1,269 @@
-<main class="min-h-screen bg-[#f6f8fc] px-4 py-6 text-[#172033] sm:px-6 lg:px-8 lg:py-8"><div class="mx-auto max-w-5xl">@if (device(); as item) {<a routerLink="/devices" class="text-xs font-bold text-[#4f7cff] hover:underline">← Devices</a><div class="mt-3 mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><h1 class="text-3xl font-bold tracking-tight">{{ item.name }}</h1><p class="mt-2 text-sm text-[#8c96a8]">{{ item.deviceType }} · <span class="font-mono">{{ item.ipAddress }}</span></p></div><a [routerLink]="['/devices', item.id, 'edit']" class="w-fit rounded-lg bg-[#4f7cff] px-4 py-2.5 text-sm font-bold text-white shadow-[0_4px_12px_rgba(79,124,255,.25)]">Edit device</a></div><section class="rounded-2xl border border-[#e8ebf2] bg-white p-5 shadow-[0_2px_10px_rgba(20,30,50,.025)] sm:p-6"><h2 class="text-base font-bold">Device details</h2><dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2"><div><dt class="text-xs font-bold uppercase tracking-wide text-[#9aa3b5]">Location</dt><dd class="mt-1 text-sm text-[#526078]">{{ item.location || '—' }}</dd></div><div><dt class="text-xs font-bold uppercase tracking-wide text-[#9aa3b5]">Monitoring</dt><dd class="mt-1 text-sm font-semibold" [class.text-[#32a866]]="item.isMonitored" [class.text-[#f39a42]]="!item.isMonitored">{{ item.isMonitored ? 'Enabled' : 'Paused' }}</dd></div><div><dt class="text-xs font-bold uppercase tracking-wide text-[#9aa3b5]">Last status</dt><dd class="mt-1 text-sm text-[#526078]">{{ item.isOnline === true ? 'Online' : item.isOnline === false ? 'Offline' : 'Unknown' }}</dd></div><div><dt class="text-xs font-bold uppercase tracking-wide text-[#9aa3b5]">Last checked</dt><dd class="mt-1 text-sm text-[#526078]">{{ item.lastCheckedAt ? (item.lastCheckedAt | date:'medium') : 'Never' }}</dd></div></dl><div class="mt-6 flex flex-wrap gap-3 border-t border-[#eef0f5] pt-5"><a [routerLink]="['/devices', item.id, 'ping-history']" class="rounded-lg bg-[#eef3ff] px-3 py-2 text-sm font-bold text-[#4f7cff]">Ping history</a><a [routerLink]="['/devices', item.id, 'resource-history']" class="rounded-lg bg-[#eef3ff] px-3 py-2 text-sm font-bold text-[#4f7cff]">Resource history</a></div></section>} @else {<p class="rounded-2xl border border-[#e8ebf2] bg-white p-10 text-center text-sm text-[#8c96a8]">{{ error() || 'Loading device…' }}</p>}</div></main>
+<div class="page">
+  @if (error()) {
+    <div class="empty">
+      <strong>{{ error() }}</strong>
+      <a routerLink="/devices" class="btn btn-secondary btn-sm">Back to devices</a>
+    </div>
+  } @else if (loading() || !device()) {
+    <div class="skeleton" style="height: 90px; margin-bottom: 18px"></div>
+    <div class="stat-grid">
+      @for (item of [1, 2, 3, 4]; track item) {
+        <div class="skeleton" style="height: 96px"></div>
+      }
+    </div>
+  } @else if (device(); as item) {
+    <div class="page-head">
+      <div>
+        <a routerLink="/devices" class="back-link">← Back to devices</a>
+        <div class="title-row">
+          <span class="device-avatar lg">{{ item.name.charAt(0).toUpperCase() }}</span>
+          <div>
+            <h1 class="page-title">{{ item.name }}</h1>
+            <p class="page-subtitle">
+              {{ typeLabel() }} · <span class="mono">{{ item.ipAddress }}</span> · {{ item.location || 'No location' }}
+            </p>
+          </div>
+          <span class="badge" [class]="badgeClass()">{{ status() }}</span>
+        </div>
+      </div>
+
+      <div class="row">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="toggling()"
+          (click)="toggleMonitoring()"
+        >
+          {{ item.isMonitored ? 'Pause monitoring' : 'Resume monitoring' }}
+        </button>
+        <a [routerLink]="['/devices', item.id, 'edit']" class="btn btn-primary">Edit device</a>
+        <button type="button" class="btn btn-danger-soft" (click)="showDelete.set(true)">Delete</button>
+      </div>
+    </div>
+
+    @if (actionError()) {
+      <div class="alert alert-error" style="margin-bottom: 16px">{{ actionError() }}</div>
+    }
+
+    <div class="stat-grid">
+      <article class="stat">
+        <div>
+          <p class="stat-label">Monitoring</p>
+          <p class="stat-value" style="font-size: 20px">{{ item.isMonitored ? 'Active' : 'Paused' }}</p>
+          <p class="stat-foot">Polled every 30 seconds</p>
+        </div>
+        <span class="stat-icon" [class]="item.isMonitored ? 'ok' : 'warn'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 2" />
+          </svg>
+        </span>
+      </article>
+
+      <article class="stat">
+        <div>
+          <p class="stat-label">Uptime (24h)</p>
+          <p class="stat-value">{{ pingStats()?.availability ?? '—' }}<small>%</small></p>
+          <p class="stat-foot">{{ pingStats()?.samples ?? 0 }} ping samples</p>
+        </div>
+        <span class="stat-icon ok">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+            <path d="M3 12h4l3 8 4-16 3 8h4" />
+          </svg>
+        </span>
+      </article>
+
+      <article class="stat">
+        <div>
+          <p class="stat-label">Avg latency (24h)</p>
+          <p class="stat-value">
+            {{ pingStats()?.average != null ? (pingStats()!.average | number: '1.0-1') : '—' }}<small> ms</small>
+          </p>
+          <p class="stat-foot">
+            Last: {{ pingStats()?.latest?.latencyMs != null ? (pingStats()!.latest!.latencyMs | number: '1.0-0') + ' ms' : '—' }}
+          </p>
+        </div>
+        <span class="stat-icon brand">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+            <path d="M4 17l6-6 4 4 6-8" />
+          </svg>
+        </span>
+      </article>
+
+      <article class="stat">
+        <div>
+          <p class="stat-label">Last checked</p>
+          <p class="stat-value" style="font-size: 20px">
+            {{ item.lastCheckedAt ? (item.lastCheckedAt | date: 'mediumTime') : 'Never' }}
+          </p>
+          <p class="stat-foot">{{ item.lastCheckedAt ? (item.lastCheckedAt | date: 'mediumDate') : 'Awaiting first poll' }}</p>
+        </div>
+        <span class="stat-icon info">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 8h.01M11 12h1v4h1" />
+          </svg>
+        </span>
+      </article>
+    </div>
+
+    <div class="detail-grid">
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2 class="panel-title">Connection details</h2>
+            <p class="panel-sub">Configuration the worker uses to reach this device.</p>
+          </div>
+        </div>
+        <div class="panel-body">
+          <dl class="kv">
+            <div>
+              <dt>Device type</dt>
+              <dd>{{ typeLabel() }}</dd>
+            </div>
+            <div>
+              <dt>Location</dt>
+              <dd>{{ item.location || '—' }}</dd>
+            </div>
+            <div>
+              <dt>SNMP</dt>
+              <dd class="mono">
+                v{{ item.snmpVersion || '2c' }} · {{ item.snmpCommunity || 'public' }} · UDP {{ item.snmpPort || 161 }}
+              </dd>
+            </div>
+            <div>
+              <dt>SSH</dt>
+              <dd class="mono">
+                {{ item.sshUsername ? item.sshUsername + '@' : '' }}{{ item.ipAddress }}:{{ item.sshPort || 22 }}
+              </dd>
+            </div>
+            <div>
+              <dt>Credential reference</dt>
+              <dd class="mono">{{ item.sshCredentialRef || '—' }}</dd>
+            </div>
+            <div>
+              <dt>Added</dt>
+              <dd>{{ item.createdAt | date: 'medium' }}</dd>
+            </div>
+            <div class="span-all">
+              <dt>Description</dt>
+              <dd>{{ item.description || 'No description' }}</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2 class="panel-title">Live resources</h2>
+            <p class="panel-sub">Latest SNMP sample, updated live when the worker polls.</p>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="meter-block">
+            <div class="meter-head">
+              <span>CPU</span>
+              <strong>{{ cpu() != null ? (cpu()! | number: '1.0-1') + '%' : 'No data' }}</strong>
+            </div>
+            <div class="meter"><span [style.width.%]="percent(cpu())"></span></div>
+          </div>
+
+          <div class="meter-block">
+            <div class="meter-head">
+              <span>Memory</span>
+              <strong>{{ memory() != null ? (memory()! | number: '1.0-1') + '%' : 'No data' }}</strong>
+            </div>
+            <div class="meter"><span class="memory" [style.width.%]="percent(memory())"></span></div>
+          </div>
+
+          <div class="history-links">
+            <a [routerLink]="['/devices', item.id, 'ping-history']" class="btn btn-secondary btn-sm">Ping history</a>
+            <a [routerLink]="['/devices', item.id, 'resource-history']" class="btn btn-secondary btn-sm">
+              Resource history
+            </a>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel" style="margin-top: 20px">
+      <div class="panel-head">
+        <div>
+          <h2 class="panel-title">Latency · last 24 hours</h2>
+          <p class="panel-sub">Gaps mean the ping failed or no sample was recorded.</p>
+        </div>
+        <a [routerLink]="['/devices', item.id, 'ping-history']" class="btn btn-ghost btn-sm">Full history →</a>
+      </div>
+      <div class="panel-body">
+        <app-line-chart
+          [series]="chart().series"
+          [labels]="chart().labels"
+          [ySuffix]="' ms'"
+          [height]="220"
+          emptyLabel="No ping samples in the last 24 hours yet."
+        />
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top: 20px">
+      <div class="panel-head">
+        <div>
+          <h2 class="panel-title">Recent checks</h2>
+          <p class="panel-sub">The twelve most recent ping results.</p>
+        </div>
+      </div>
+      @if (!recentPings().length) {
+        <div class="empty">No ping results recorded yet.</div>
+      } @else {
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Checked at</th>
+                <th>Result</th>
+                <th>Latency</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (ping of recentPings(); track $index) {
+                <tr>
+                  <td>{{ ping.checkedAt | date: 'medium' }}</td>
+                  <td>
+                    <span class="badge" [class]="ping.isOnline ? 'badge-ok' : 'badge-danger'">
+                      {{ ping.isOnline ? 'Online' : 'Offline' }}
+                    </span>
+                  </td>
+                  <td class="num">{{ ping.latencyMs != null ? (ping.latencyMs | number: '1.0-1') + ' ms' : '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+</div>
+
+@if (showDelete() && device(); as item) {
+  <div class="modal-backdrop" (click)="showDelete.set(false)">
+    <div class="modal" style="max-width: 440px" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <div>
+          <h2 class="modal-title">Delete device?</h2>
+          <p class="modal-sub">
+            <strong>{{ item.name }}</strong> and all of its ping and resource history will be removed. This cannot be
+            undone.
+          </p>
+        </div>
+        <button type="button" class="modal-close" (click)="showDelete.set(false)" aria-label="Close">×</button>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-secondary" (click)="showDelete.set(false)">Cancel</button>
+        <button type="button" class="btn btn-danger" [disabled]="deleting()" (click)="confirmDelete()">
+          {{ deleting() ? 'Deleting…' : 'Delete device' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

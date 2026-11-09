@@ -1,23 +1,24 @@
 export interface PingResult {
-  id: string;
-  deviceId: string;
+  id?: string;
+  deviceId?: string;
   isOnline: boolean;
   latencyMs?: number; // undefined when the ping timed out / failed
   checkedAt: string; // ISO date string
 }
 
-// Query params accepted by GET /api/monitoring/ping-history
+// Query params accepted by GET /api/monitoring/devices/{id}/ping-history
 export interface PingHistoryQuery {
   deviceId: string;
   from?: string;
   to?: string;
-  take?: number;
 }
 
-// Lightweight live-status payload pushed over SignalR on every 30s sweep.
+// Live payload pushed over SignalR by the API's MonitoringHub after each
+// ping sweep. Field names match the server's DeviceStatusUpdate record.
 export interface DeviceStatusUpdate {
   deviceId: string;
-  status: 'Online' | 'Offline';
+  name: string;
+  isOnline: boolean;
+  timestampUtc: string;
   latencyMs?: number;
-  checkedAt: string;
 }

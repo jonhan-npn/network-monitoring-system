@@ -11,6 +11,7 @@ public class AlertRuleConfiguration : IEntityTypeConfiguration<AlertRule>
         builder.ToTable("alert_rules");
 
         builder.HasKey(a => a.Id);
+        builder.Property(a => a.Id).HasColumnName("id");
 
         builder.Property(a => a.DeviceId).HasColumnName("device_id");
         builder.Property(a => a.Name).HasColumnName("name").HasMaxLength(128).IsRequired();

@@ -1,1 +1,155 @@
-<main class="workspace-page page-content"><p><a routerLink="/devices">← Devices</a></p><h1>Resource history</h1>@if(error()){<p>{{error()}}</p>}<section class="card"><table class="data-table"><thead><tr><th>SAMPLED</th><th>CPU</th><th>MEMORY</th></tr></thead><tbody>@for(point of points();track point.sampledAt){<tr><td>{{point.sampledAt | date:'medium'}}</td><td>{{point.cpuPercent ?? '—'}}%</td><td>{{point.memoryPercent ?? '—'}}%</td></tr>}@empty{<tr><td colspan="3">No history available.</td></tr>}</tbody></table></section></main>
+<div class="page">
+  <div class="page-head">
+    <div>
+      <a [routerLink]="['/devices', id]" class="back-link">← {{ deviceName() }}</a>
+      <p class="eyebrow">Monitoring</p>
+      <h1 class="page-title">Resource history</h1>
+      <p class="page-subtitle">CPU and memory samples collected over SNMP.</p>
+    </div>
+
+    <div class="row">
+      <div class="segmented">
+        @for (option of ranges; track option.label) {
+          <button type="button" [class.selected]="range() === option.label" (click)="setRange(option.label)">
+            {{ option.label }}
+          </button>
+        }
+      </div>
+      <a [routerLink]="['/devices', id, 'ping-history']" class="btn btn-secondary">Ping history →</a>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="empty">
+      <strong>{{ error() }}</strong>
+      <button type="button" class="btn btn-secondary btn-sm" (click)="load()">Retry</button>
+    </div>
+  } @else if (loading()) {
+    <div class="skeleton" style="height: 96px; margin-bottom: 18px"></div>
+    <div class="skeleton" style="height: 300px"></div>
+  } @else if (stats(); as stats) {
+    <div class="stat-grid">
+      <article class="stat">
+        <div>
+          <p class="stat-label">Samples</p>
+          <p class="stat-value">{{ stats.samples }}</p>
+          <p class="stat-foot">SNMP polls in range</p>
+        </div>
+        <span class="stat-icon info">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+            <rect x="3" y="4" width="18" height="7" rx="2" />
+            <rect x="3" y="13" width="18" height="7" rx="2" />
+            <path d="M7 7.5h.01M7 16.5h.01" />
+          </svg>
+        </span>
+      </article>
+
+      <article class="stat">
+        <div>
+          <p class="stat-label">Average CPU</p>
+          <p class="stat-value">{{ percent(stats.cpu?.average) }}</p>
+          <p class="stat-foot">
+            Min {{ percent(stats.cpu?.min) }} · Max {{ percent(stats.cpu?.max) }}
+          </p>
+        </div>
+        <span class="stat-icon brand">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+            <rect x="7" y="7" width="10" height="10" rx="2" />
+            <path d="M9 3v2M15 3v2M9 19v2M15 19v2M3 9h2M3 15h2M19 9h2M19 15h2" />
+          </svg>
+        </span>
+      </article>
+
+      <article class="stat">
+        <div>
+          <p class="stat-label">Average memory</p>
+          <p class="stat-value">{{ percent(stats.memory?.average) }}</p>
+          <p class="stat-foot">
+            Min {{ percent(stats.memory?.min) }} · Max {{ percent(stats.memory?.max) }}
+          </p>
+        </div>
+        <span class="stat-icon ok">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+        </span>
+      </article>
+
+      <article class="stat">
+        <div>
+          <p class="stat-label">Latest sample</p>
+          <p class="stat-value" style="font-size: 20px">
+            {{ percent(stats.latest?.cpuPercent) }}
+          </p>
+          <p class="stat-foot">{{ stats.latest?.sampledAt | date: 'medium' }}</p>
+        </div>
+        <span class="stat-icon warn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 2" />
+          </svg>
+        </span>
+      </article>
+    </div>
+
+    <section class="panel" style="margin-top: 20px">
+      <div class="panel-head">
+        <div>
+          <h2 class="panel-title">CPU and memory over time</h2>
+          <p class="panel-sub">Averaged into readable buckets. Devices without SNMP configured report no samples.</p>
+        </div>
+      </div>
+      <div class="panel-body">
+        <app-line-chart
+          [series]="chart().series"
+          [labels]="chart().labels"
+          [ySuffix]="'%'"
+          [yMax]="100"
+          [height]="280"
+          emptyLabel="No resource samples in this period yet."
+        />
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top: 20px">
+      <div class="panel-head">
+        <div>
+          <h2 class="panel-title">Recent samples</h2>
+          <p class="panel-sub">Up to 100 most recent samples, newest first.</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Sampled at</th>
+              <th>CPU</th>
+              <th>Memory</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (point of recent(); track $index) {
+              <tr>
+                <td>{{ point.sampledAt | date: 'medium' }}</td>
+                <td class="num">{{ percent(point.cpuPercent) }}</td>
+                <td class="num">{{ percent(point.memoryPercent) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  } @else {
+    <div class="empty">
+      <span class="empty-icon">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <rect x="7" y="7" width="10" height="10" rx="2" />
+          <path d="M9 3v2M15 3v2M9 19v2M15 19v2M3 9h2M3 15h2M19 9h2M19 15h2" />
+        </svg>
+      </span>
+      <strong>No resource samples yet</strong>
+      <span>CPU and memory are collected over SNMP. Check the device's SNMP community and port.</span>
+      <a [routerLink]="['/devices', id, 'edit']" class="btn btn-secondary btn-sm">Edit SNMP settings</a>
+    </div>
+  }
+</div>

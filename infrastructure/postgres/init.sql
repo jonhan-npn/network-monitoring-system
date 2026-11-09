@@ -9,11 +9,11 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ----------------------------------------------------------------------------
--- Enums (mirrors NetworkMonitor.Domain.Enums)
+-- Enum-backed columns
+-- These are VARCHAR columns (not Postgres enum types) because the EF Core
+-- configurations map the C# enums with HasConversion<string>() — keeping the
+-- physical type as varchar avoids Npgsql enum-mapping errors at runtime.
 -- ----------------------------------------------------------------------------
-CREATE TYPE device_type AS ENUM ('Router', 'Switch', 'Server', 'AccessPoint', 'Firewall', 'Other');
-CREATE TYPE event_type AS ENUM ('DeviceOnline', 'DeviceOffline', 'HighCpu', 'HighMemory', 'AlertSent', 'DeviceAdded', 'DeviceRemoved', 'DeviceUpdated');
-CREATE TYPE alert_channel AS ENUM ('Email', 'Telegram');
 
 -- ----------------------------------------------------------------------------
 -- Users (auth)
@@ -36,8 +36,8 @@ CREATE TABLE users (
 CREATE TABLE devices (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name            VARCHAR(128) NOT NULL,
-    ip_address      INET         NOT NULL,
-    device_type     device_type  NOT NULL DEFAULT 'Other',
+    ip_address      VARCHAR(45)  NOT NULL,
+    device_type     VARCHAR(32)  NOT NULL DEFAULT 'Other',
     location        VARCHAR(256),
     description     VARCHAR(512),
 
@@ -94,7 +94,7 @@ CREATE INDEX idx_resource_samples_device_time ON resource_samples (device_id, sa
 CREATE TABLE event_log_entries (
     id              BIGSERIAL PRIMARY KEY,
     device_id       UUID REFERENCES devices(id) ON DELETE SET NULL,
-    event_type      event_type NOT NULL,
+    event_type      VARCHAR(32) NOT NULL,
     message         VARCHAR(1024) NOT NULL,
     metadata        JSONB,
     occurred_at     TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -113,7 +113,7 @@ CREATE TABLE alert_rules (
     metric              VARCHAR(32)  NOT NULL, -- 'Availability' | 'Cpu' | 'Memory'
     threshold_percent   DOUBLE PRECISION,       -- null for Availability
     consecutive_breaches INTEGER NOT NULL DEFAULT 1,
-    channel             alert_channel NOT NULL DEFAULT 'Email',
+    channel             VARCHAR(16) NOT NULL DEFAULT 'Email',
     destination         VARCHAR(256) NOT NULL, -- email address or telegram chat id
     is_enabled          BOOLEAN NOT NULL DEFAULT TRUE,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -126,12 +126,12 @@ CREATE INDEX idx_alert_rules_device ON alert_rules (device_id);
 -- Seed: a default admin user for first login.
 -- Password is "ChangeMe123!" hashed with BCrypt — CHANGE THIS IMMEDIATELY
 -- after first login in any non-local environment.
--- Hash below corresponds to "ChangeMe123!" — regenerate for real deployments. 2a$11$K9m1n7l8v0nQeJt2G8V0UOe6y2b0m1jv6r0m0m2G3n7h8i9j0k1l2
+-- This hash was generated with BCrypt (work factor 11) for "ChangeMe123!".
 -- ----------------------------------------------------------------------------
 INSERT INTO users (username, email, password_hash, role)
 VALUES (
     'admin',
     'admin@gmail.com',
-    '$Admin@123',
+    '$2b$11$cuDa4iGaCQU8rUmoTGNXaesHjdK26Yc8.beDU7kHiCAteHujNY3xO',
     'Admin'
 );

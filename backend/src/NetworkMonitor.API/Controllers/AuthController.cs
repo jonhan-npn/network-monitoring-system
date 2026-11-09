@@ -1,47 +1,33 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NetworkMonitor.Application.DTOs;
 using NetworkMonitor.Application.Features.Authentication;
+using NetworkMonitor.Application.Features.Users;
 
 namespace NetworkMonitor.API.Controllers;
 
+/// <summary>
+/// Authentication endpoints. Login/register/me go through the same
+/// MediatR pipeline as every other controller; the access token itself is
+/// issued by IJwtTokenGenerator in Infrastructure.
+/// </summary>
 [ApiController]
 [Route("api/auth")]
-public class AuthController : ControllerBase
+public class AuthController(ISender sender) : ControllerBase
 {
-    private readonly GetCurrentUserQuery _authenticationService;
-    private readonly ILogger<AuthController> _logger;
-
-    public AuthController(GetCurrentUserQuery authenticationService, ILogger<AuthController> logger)
-    {
-        _authenticationService = authenticationService;
-        _logger = logger;
-    }
-
-    /// <summary>
-    /// Exchanges a username/password for an access token + refresh token.
-    /// </summary>
+    /// <summary>Exchanges a username/password for an access token.</summary>
     [HttpPost("login")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(AuthResultDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<AuthResultDto>> Login([FromBody] LoginRequestDto request, CancellationToken ct)
-    {
-        var result = await _authenticationService.LoginAsync(request.Username, request.Password, ct);
-
-        if (result is null)
-        {
-            _logger.LogWarning("Failed login attempt for username {Username}", request.Username);
-            return Unauthorized(new { message = "Invalid username or password." });
-        }
-
-        return Ok(result);
-    }
+    public async Task<ActionResult<AuthResultDto>> Login([FromBody] LoginRequestDto request, CancellationToken ct) =>
+        Ok(await sender.Send(new LoginCommand(request.Username, request.Password), ct));
 
     /// <summary>
-    /// Registers a new user. In most enterprise deployments this would be
-    /// restricted to Admins after the first bootstrap account exists —
-    /// gate it behind [Authorize(Policy = "AdminOnly")] once you have one.
+    /// Registers a new user and logs them straight in. Self-registration
+    /// always gets the least-privileged role (Viewer); promoting a user is
+    /// an Admin-only action through the user-management endpoints.
     /// </summary>
     [HttpPost("register")]
     [AllowAnonymous]
@@ -49,57 +35,41 @@ public class AuthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<AuthResultDto>> Register([FromBody] RegisterRequestDto request, CancellationToken ct)
     {
-        var result = await _authenticationService.RegisterAsync(request.Username, request.Email, request.Password, ct);
+        await sender.Send(new CreateUserCommand(request.Username, request.Email, request.Password, Role: "Viewer"), ct);
+        var result = await sender.Send(new LoginCommand(request.Username, request.Password), ct);
         return CreatedAtAction(nameof(Login), null, result);
     }
 
     /// <summary>
-    /// Trades a still-valid refresh token for a new access token, so the
-    /// Angular client can stay logged in without re-prompting for a password.
+    /// Trades a refresh token for a new access token. Not implemented in v1:
+    /// refresh tokens need a server-side store (and a schema change), which
+    /// docs/api.md deliberately defers. Clients should re-login when the
+    /// access token expires.
     /// </summary>
     [HttpPost("refresh")]
     [AllowAnonymous]
-    [ProducesResponseType(typeof(AuthResultDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<AuthResultDto>> Refresh([FromBody] RefreshRequestDto request, CancellationToken ct)
-    {
-        var result = await _authenticationService.RefreshAsync(request.RefreshToken, ct);
-
-        if (result is null)
-        {
-            return Unauthorized(new { message = "Refresh token is invalid or expired." });
-        }
-
-        return Ok(result);
-    }
+    [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+    public IActionResult Refresh(CancellationToken ct) =>
+        StatusCode(StatusCodes.Status501NotImplemented,
+            new { message = "Refresh tokens are not implemented yet. Please log in again." });
 
     /// <summary>
-    /// Revokes the caller's current refresh token (server-side logout).
+    /// Client-side logout. JWTs are stateless, so there is nothing to revoke
+    /// server-side until refresh tokens exist — the Angular app drops its
+    /// stored token. Kept as an endpoint so the client contract is stable.
     /// </summary>
     [HttpPost("logout")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> Logout([FromBody] RefreshRequestDto request, CancellationToken ct)
-    {
-        await _authenticationService.RevokeRefreshTokenAsync(request.RefreshToken, ct);
-        return NoContent();
-    }
+    public IActionResult Logout() => NoContent();
 
     /// <summary>Returns the authenticated caller's profile, for the Angular shell to show "logged in as ...".</summary>
     [HttpGet("me")]
     [Authorize]
-    [ProducesResponseType(typeof(CurrentUserDto), StatusCodes.Status200OK)]
-    public ActionResult<CurrentUserDto> Me()
-    {
-        var userId = User.FindFirst("sub")?.Value ?? User.FindFirst("nameid")?.Value;
-        var username = User.Identity?.Name ?? User.FindFirst("unique_name")?.Value;
-        var roles = User.FindAll(System.Security.Claims.ClaimTypes.Role).Select(c => c.Value).ToArray();
-
-        return Ok(new CurrentUserDto(userId ?? string.Empty, username ?? string.Empty, roles));
-    }
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<UserDto>> Me(CancellationToken ct) =>
+        Ok(await sender.Send(new GetCurrentUserQuery(), ct));
 }
 
 public record LoginRequestDto(string Username, string Password);
 public record RegisterRequestDto(string Username, string Email, string Password);
-public record RefreshRequestDto(string RefreshToken);
-public record CurrentUserDto(string UserId, string Username, string[] Roles);

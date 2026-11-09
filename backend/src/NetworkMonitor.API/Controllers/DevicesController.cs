@@ -19,7 +19,15 @@ public class DevicesController(ISender sender) : ControllerBase
         [FromQuery] int pageSize = 25, [FromQuery] string? search = null, [FromQuery] string? type = null,
         [FromQuery] bool? isMonitored = null, CancellationToken ct = default)
     {
-        if (!TryParseDeviceType(type, out var deviceType)) return ValidationProblem("Type is not a valid device type.");
+        // `type` is an optional filter: a missing value means "all types",
+        // so only validate it when the caller actually supplied one.
+        DeviceType? deviceType = null;
+        if (!string.IsNullOrWhiteSpace(type))
+        {
+            if (!TryParseDeviceType(type, out var parsed)) return ValidationProblem("Type is not a valid device type.");
+            deviceType = parsed;
+        }
+
         return Ok(await sender.Send(new GetDevicesQuery(Math.Max(page, 1), Math.Clamp(pageSize, 1, 100), search, deviceType, isMonitored), ct));
     }
 

@@ -13,6 +13,7 @@ public class DeviceDto
     public string SnmpVersion { get; init; } = "2c";
     public int SshPort { get; init; } = 22;
     public string? SshUsername { get; init; }
+    public string? SshCredentialRef { get; init; }
     public bool IsMonitored { get; init; }
     public DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; init; }
@@ -33,6 +34,7 @@ public class DeviceListItemDto
     public string IpAddress { get; init; } = string.Empty;
     public string DeviceType { get; init; } = string.Empty;
     public string? Location { get; init; }
+    public string? Description { get; init; }
     public bool IsMonitored { get; init; }
     public bool? IsOnline { get; init; }
     public DateTime? LastCheckedAt { get; init; }

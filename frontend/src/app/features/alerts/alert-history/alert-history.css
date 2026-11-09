@@ -1,0 +1,21 @@
+.filter {
+  width: auto;
+  min-width: 220px;
+}
+
+.toolbar-note {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.message-cell {
+  max-width: 420px;
+  color: var(--ink-2);
+}
+
+.pager button.current {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}

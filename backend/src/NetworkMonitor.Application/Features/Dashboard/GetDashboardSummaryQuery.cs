@@ -49,10 +49,13 @@ public class GetDashboardSummaryQueryHandler : IRequestHandler<GetDashboardSumma
         // resource sample yet — devices that only just started SNMP polling
         // (or don't support SNMP at all) are excluded rather than counted
         // as 0%, which would otherwise drag the average down misleadingly.
-        var latestSamples = await Task.WhenAll(
-            deviceIds.Select(id => _monitoringRepository.GetLatestResourceSampleAsync(id, cancellationToken)));
+        // One batched query rather than Task.WhenAll over per-device calls:
+        // DbContext is not thread-safe, so the parallel version intermittently
+        // threw "a second operation was started on this context instance".
+        var latestSamples = await _monitoringRepository
+            .GetLatestResourceSamplesAsync(deviceIds, cancellationToken);
 
-        var samplesWithData = latestSamples.Where(s => s is not null).ToList();
+        var samplesWithData = latestSamples.Values.ToList();
         var avgCpu = samplesWithData.Count > 0
             ? samplesWithData.Average(s => s!.CpuPercent ?? 0)
             : 0;

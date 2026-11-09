@@ -1,1 +1,319 @@
-<main class="workspace-page page-content"><p><a routerLink="/">← Overview</a></p><h1>Alert rules</h1><p><a routerLink="/alerts/history">View alert history</a></p>@if(error()){<p>{{error()}}</p>}<section class="card"><table class="data-table"><thead><tr><th>NAME</th><th>METRIC</th><th>THRESHOLD</th><th>CHANNEL</th><th>STATUS</th><th></th></tr></thead><tbody>@for(rule of rules();track rule.id){<tr><td>{{rule.name}}</td><td>{{rule.metric}}</td><td>{{rule.thresholdPercent ?? '—'}}%</td><td>{{rule.channel}}</td><td>{{rule.isEnabled ? 'Enabled' : 'Disabled'}}</td><td><button (click)="delete(rule.id)">Delete</button></td></tr>}@empty{<tr><td colspan="6">No alert rules configured.</td></tr>}</tbody></table></section></main>
+<div class="page">
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">Alerting</p>
+      <h1 class="page-title">Alert rules</h1>
+      <p class="page-subtitle">
+        Decide what should page you when a device goes offline or a resource crosses a threshold.
+        <a routerLink="/alerts/history" class="inline-link">View alert history →</a>
+      </p>
+    </div>
+
+    <div class="row">
+      <button type="button" class="btn btn-secondary" (click)="openTest()">Send test alert</button>
+      <button type="button" class="btn btn-primary" (click)="openCreate()">+ New rule</button>
+    </div>
+  </div>
+
+  @if (actionError()) {
+    <div class="alert alert-error" style="margin-bottom: 16px">{{ actionError() }}</div>
+  }
+  @if (actionMessage()) {
+    <div class="alert alert-success" style="margin-bottom: 16px">{{ actionMessage() }}</div>
+  }
+
+  <section class="panel">
+    <div class="panel-head">
+      <div>
+        <h2 class="panel-title">Configured rules</h2>
+        <p class="panel-sub">{{ rules().length }} rule(s) · {{ enabledCount() }} enabled</p>
+      </div>
+    </div>
+
+    @if (error()) {
+      <div class="empty">
+        <strong>{{ error() }}</strong>
+        <button type="button" class="btn btn-secondary btn-sm" (click)="load()">Retry</button>
+      </div>
+    } @else if (loading()) {
+      <div style="padding: 18px">
+        @for (row of [1, 2, 3]; track row) {
+          <div class="skeleton" style="height: 46px; margin-bottom: 8px"></div>
+        }
+      </div>
+    } @else if (!rules().length) {
+      <div class="empty">
+        <span class="empty-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <path d="M18 8a6 6 0 0 0-12 0c0 6-2 7-2 8h16c0-1-2-2-2-8" />
+            <path d="M13.7 20a2 2 0 0 1-3.4 0" />
+          </svg>
+        </span>
+        <strong>No alert rules yet</strong>
+        <span>Create a rule to be notified when a device or resource crosses a threshold.</span>
+        <button type="button" class="btn btn-primary btn-sm" (click)="openCreate()">Create your first rule</button>
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Rule</th>
+              <th>Condition</th>
+              <th>After</th>
+              <th>Deliver to</th>
+              <th>Last triggered</th>
+              <th>Enabled</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (rule of rules(); track rule.id) {
+              <tr>
+                <td>
+                  <div class="rule-name">
+                    <strong>{{ rule.name }}</strong>
+                    <small>{{ deviceLabel(rule) }}</small>
+                  </div>
+                </td>
+                <td>{{ metricLabel(rule) }}</td>
+                <td class="num">{{ rule.consecutiveBreaches }} check(s)</td>
+                <td>
+                  <span class="badge badge-plain" [class]="badgeForChannel(rule.channel)">
+                    {{ channelLabels[rule.channel] ?? rule.channel }}
+                  </span>
+                  <span class="destination">{{ rule.destination }}</span>
+                </td>
+                <td>{{ rule.lastTriggeredAt ? (rule.lastTriggeredAt | date: 'medium') : 'Never' }}</td>
+                <td>
+                  <button
+                    type="button"
+                    class="switch"
+                    [class.on]="rule.isEnabled"
+                    [disabled]="togglingId() === rule.id"
+                    [attr.aria-pressed]="rule.isEnabled"
+                    [attr.aria-label]="rule.isEnabled ? 'Disable rule' : 'Enable rule'"
+                    (click)="toggleEnabled(rule)"
+                  ></button>
+                </td>
+                <td class="actions">
+                  <button type="button" class="btn btn-ghost btn-sm" (click)="openEdit(rule)">Edit</button>
+                  <button type="button" class="btn btn-ghost btn-sm danger-text" (click)="pendingDelete.set(rule)">
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</div>
+
+<!-- Create / edit rule -->
+@if (modalOpen()) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <div>
+          <h2 class="modal-title">{{ editing() ? 'Edit alert rule' : 'New alert rule' }}</h2>
+          <p class="modal-sub">
+            {{ editing() ? 'Change when this rule fires and where alerts are delivered.' : 'Alerts are evaluated by the worker after each monitoring cycle.' }}
+          </p>
+        </div>
+        <button type="button" class="modal-close" (click)="closeModal()" aria-label="Close">×</button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <div class="modal-body">
+          <div class="form-grid cols-2">
+            <label class="field span-2">
+              <span class="label">Rule name <span class="req">*</span></span>
+              <input
+                class="input"
+                [class.invalid]="invalid('name')"
+                formControlName="name"
+                placeholder="e.g. Core router offline"
+              />
+              @if (invalid('name')) {
+                <span class="field-error">Give this rule a name.</span>
+              }
+            </label>
+
+            <label class="field">
+              <span class="label">Applies to</span>
+              <select class="select" formControlName="deviceId">
+                <option value="">All devices</option>
+                @for (device of devices(); track device.id) {
+                  <option [value]="device.id">{{ device.name }} · {{ device.ipAddress }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="field">
+              <span class="label">Metric</span>
+              <select class="select" formControlName="metric">
+                @for (metric of metrics; track metric) {
+                  <option [value]="metric">{{ metricLabels[metric] }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="field">
+              <span class="label">Threshold</span>
+              <span class="input-suffix">
+                <input
+                  class="input"
+                  type="number"
+                  min="1"
+                  max="100"
+                  [class.invalid]="invalid('thresholdPercent')"
+                  formControlName="thresholdPercent"
+                  [disabled]="isAvailability()"
+                />
+                <em>%</em>
+              </span>
+              <span class="help">
+                {{ isAvailability() ? 'Not used for availability rules.' : 'Alert when usage stays above this percent.' }}
+              </span>
+            </label>
+
+            <label class="field">
+              <span class="label">Consecutive breaches</span>
+              <input
+                class="input"
+                type="number"
+                min="1"
+                max="50"
+                [class.invalid]="invalid('consecutiveBreaches')"
+                formControlName="consecutiveBreaches"
+              />
+              <span class="help">Failing checks before the alert fires. Avoids paging on a single blip.</span>
+            </label>
+
+            <label class="field">
+              <span class="label">Channel</span>
+              <select class="select" formControlName="channel">
+                @for (channel of channels; track channel) {
+                  <option [value]="channel">{{ channelLabels[channel] }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="field">
+              <span class="label">Destination <span class="req">*</span></span>
+              <input
+                class="input"
+                [class.invalid]="invalid('destination')"
+                formControlName="destination"
+                [placeholder]="form.controls.channel.value === 'Telegram' ? 'Telegram chat id' : 'oncall@company.com'"
+              />
+              @if (invalid('destination')) {
+                <span class="field-error">Where should this alert be delivered?</span>
+              }
+            </label>
+
+            <div class="field span-2 toggle-row">
+              <div>
+                <span class="label">Enabled</span>
+                <span class="help">Disabled rules stay configured but are not evaluated.</span>
+              </div>
+              <button
+                type="button"
+                class="switch"
+                [class.on]="form.controls.isEnabled.value"
+                (click)="form.controls.isEnabled.setValue(!form.controls.isEnabled.value)"
+                [attr.aria-pressed]="form.controls.isEnabled.value"
+              ></button>
+            </div>
+          </div>
+
+          @if (formError()) {
+            <div class="alert alert-error" style="margin-top: 16px">{{ formError() }}</div>
+          }
+        </div>
+
+        <div class="modal-foot">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving()">
+            {{ saving() ? 'Saving…' : editing() ? 'Save changes' : 'Create rule' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Test alert -->
+@if (testOpen()) {
+  <div class="modal-backdrop" (click)="testOpen.set(false)">
+    <div class="modal" style="max-width: 440px" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <div>
+          <h2 class="modal-title">Send a test alert</h2>
+          <p class="modal-sub">Confirms the worker can deliver through the selected channel.</p>
+        </div>
+        <button type="button" class="modal-close" (click)="testOpen.set(false)" aria-label="Close">×</button>
+      </div>
+
+      <form [formGroup]="testForm" (ngSubmit)="sendTest()">
+        <div class="modal-body">
+          <div class="form-grid">
+            <label class="field">
+              <span class="label">Channel</span>
+              <select class="select" formControlName="channel">
+                @for (channel of channels; track channel) {
+                  <option [value]="channel">{{ channelLabels[channel] }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="field">
+              <span class="label">Destination</span>
+              <input class="input" formControlName="destination" placeholder="Chat id or email address" />
+              @if (testForm.controls.destination.touched && testForm.controls.destination.invalid) {
+                <span class="field-error">Enter a destination.</span>
+              }
+            </label>
+          </div>
+
+          @if (testError()) {
+            <div class="alert alert-error" style="margin-top: 14px">{{ testError() }}</div>
+          }
+          @if (testSuccess()) {
+            <div class="alert alert-success" style="margin-top: 14px">{{ testSuccess() }}</div>
+          }
+        </div>
+
+        <div class="modal-foot">
+          <button type="button" class="btn btn-secondary" (click)="testOpen.set(false)">Close</button>
+          <button type="submit" class="btn btn-primary" [disabled]="testing()">
+            {{ testing() ? 'Sending…' : 'Send test' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Delete -->
+@if (pendingDelete(); as rule) {
+  <div class="modal-backdrop" (click)="pendingDelete.set(null)">
+    <div class="modal" style="max-width: 430px" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <div>
+          <h2 class="modal-title">Delete alert rule?</h2>
+          <p class="modal-sub"><strong>{{ rule.name }}</strong> will stop being evaluated. Past alert history is kept.</p>
+        </div>
+        <button type="button" class="modal-close" (click)="pendingDelete.set(null)" aria-label="Close">×</button>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-secondary" (click)="pendingDelete.set(null)">Cancel</button>
+        <button type="button" class="btn btn-danger" [disabled]="deleting()" (click)="confirmDelete()">
+          {{ deleting() ? 'Deleting…' : 'Delete rule' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

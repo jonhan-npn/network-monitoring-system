@@ -1,127 +1,256 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { Monitoring, DashboardSummary } from '../../core/services/monitoring';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
-type NavItem = { label: string; icon: string; badge?: string };
-type Device = {
+import { DashboardSummary, DeviceStatus, Monitoring } from '../../core/services/monitoring';
+import { Device as DeviceApi } from '../../core/services/device';
+import { Signalr } from '../../core/services/signalr';
+import { Devices } from '../../core/models/device.model';
+import { DeviceStatusUpdate } from '../../core/models/ping-result.model';
+import { AuthService } from '../../core/services/auth.service';
+import { ChartSeries, LineChart } from '../../shared/components/line-chart/line-chart';
+
+type DeviceRow = {
+  id: string;
   name: string;
   type: string;
   location: string;
   ip: string;
-  status: 'Online' | 'Warning' | 'Offline';
-  latency: string;
-  initials: string;
-  color: string;
-  response: string;
-  lastSeen: string;
+  isMonitored: boolean;
+  isOnline?: boolean;
+  latencyMs?: number;
+  lastCheckedAt?: string;
 };
+
+const RANGE_HOURS: Record<string, number> = { '1H': 1, '6H': 6, '24H': 24, '7D': 24 * 7 };
+const BUCKETS = 14;
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule],
+  imports: [CommonModule, DatePipe, RouterLink, LineChart],
   templateUrl: './dashboard.html',
+  styleUrl: './dashboard.css',
 })
 export class Dashboard implements OnInit {
   private readonly monitoring = inject(Monitoring);
-  constructor(private readonly router: Router) { }
-  readonly sidebarOpen = signal(false);
-  readonly activeNav = signal('Overview');
-  readonly period = signal('24 hours');
-  readonly selectedRange = signal('24H');
+  private readonly deviceApi = inject(DeviceApi);
+  private readonly signalr = inject(Signalr);
+  private readonly auth = inject(AuthService);
+
   readonly summary = signal<DashboardSummary | null>(null);
-  readonly timeRanges = ['1H', '6H', '24H', '7D'];
+  readonly rows = signal<DeviceRow[]>([]);
+  readonly loading = signal(true);
+  readonly error = signal<string | null>(null);
 
-  // Keep the dashboard useful before the API responds (and match the prior UI).
-  private readonly fallbackMetrics = {
-    totalDevices: 48,
-    onlineDevices: 44,
-    offlineDevices: 2,
-    activeAlerts: 3,
-    uptime: 99.98,
-  };
+  readonly range = signal('24H');
+  readonly ranges = Object.keys(RANGE_HOURS);
+  readonly chartLabels = signal<string[]>([]);
+  readonly chartSeries = signal<ChartSeries[]>([]);
+  readonly chartLoading = signal(false);
 
-  readonly primaryNav: NavItem[] = [
-    { label: 'Overview', icon: 'grid' },
-    { label: 'Devices', icon: 'server', badge: '48' },
-    { label: 'Topology', icon: 'nodes' },
-    { label: 'Alerts', icon: 'bell', badge: '3' },
-  ];
-  readonly secondaryNav: NavItem[] = [
-    { label: 'Reports', icon: 'chart' },
-    { label: 'Event log', icon: 'activity' },
-    { label: 'Settings', icon: 'settings' },
-  ];
-  readonly devices: Device[] = [
-    {
-      name: 'Core Router', type: 'Cisco ISR 4451', location: 'HQ · Floor 1', ip: '10.10.0.1', status: 'Online', latency: '2 ms', initials: 'CR', color: 'violet',
-      lastSeen: 'Just now',
-      response: '2 ms'
-    },
-    {
-      name: 'Warehouse SW-01', type: 'Aruba 2930F', location: 'Warehouse A', ip: '10.10.24.11', status: 'Warning', latency: '48 ms', initials: 'SW', color: 'amber',
-      lastSeen: '2 min ago',
-      response: '48 ms'
-    },
-    {
-      name: 'VPN Gateway', type: 'FortiGate 100F', location: 'HQ · DMZ', ip: '10.10.1.254', status: 'Online', latency: '5 ms', initials: 'VG', color: 'blue',
-      lastSeen: 'Just now',
-      response: '5 ms'
-    },
-    {
-      name: 'Branch AP-12', type: 'Ubiquiti U6 Pro', location: 'Branch · Phnom Penh', ip: '10.40.2.12', status: 'Offline', latency: '—', initials: 'AP', color: 'rose',
-      lastSeen: '18 min ago',
-      response: '—'
-    },
-  ];
+  readonly today = new Date();
 
-  ngOnInit(): void {
-    // this.monitoring.getSummary().subscribe({ next: summary => this.summary.set(summary) });
-    // this.monitoring.getStatus().subscribe({ next: statuses => {
-    //   this.devices.splice(0, this.devices.length, ...statuses.slice(0, 4).map(status => ({
-    //     name: status.deviceName, type: 'Monitored device', location: '—', ip: status.deviceId,
-    //     status: (status.isOnline ? 'Online' : 'Offline') as const, latency: status.latencyMs == null ? '—' : `${status.latencyMs} ms`,
-    //     initials: status.deviceName.slice(0, 2).toUpperCase(), color: status.isOnline ? 'violet' : 'rose',
-    //   })));
-    // }});
-  }
+  readonly greeting = computed(() => {
+    const hour = new Date().getHours();
+    const part = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+    const username = this.auth.currentUser()?.username ?? 'there';
+    const name = username.split(/[\s._-]+/).filter(Boolean)[0] ?? username;
+    return `Good ${part}, ${name.charAt(0).toUpperCase() + name.slice(1)}`;
+  });
 
-  setRange(range: string) { this.selectedRange.set(range); }
-  selectRange(range: string) { this.setRange(range); }
-  toggleSidebar() { this.sidebarOpen.update(open => !open); }
-  setActiveNav(label: string) { this.selectNav(label); }
-
-  totalDevices() { return this.summary()?.totalDevices ?? this.fallbackMetrics.totalDevices; }
-  onlineDevices() { return this.summary()?.onlineDevices ?? this.fallbackMetrics.onlineDevices; }
-  offlineDevices() { return this.summary()?.offlineDevices ?? this.fallbackMetrics.offlineDevices; }
-  warningDevices() { return Math.max(0, this.totalDevices() - this.onlineDevices() - this.offlineDevices()); }
-  activeAlerts() { return this.summary()?.alertsTriggeredLast24h ?? this.fallbackMetrics.activeAlerts; }
-  criticalAlerts() { return this.offlineDevices(); }
-  uptime() { return this.fallbackMetrics.uptime.toFixed(2); }
-  onlinePercentage() {
+  readonly totalDevices = computed(() => this.rows().length || this.summary()?.totalDevices || 0);
+  readonly onlineDevices = computed(() => this.rows().filter((row) => row.isOnline === true).length);
+  readonly offlineDevices = computed(() => this.rows().filter((row) => row.isOnline === false).length);
+  readonly unknownDevices = computed(
+    () => this.totalDevices() - this.onlineDevices() - this.offlineDevices(),
+  );
+  readonly monitoredDevices = computed(() => this.rows().filter((row) => row.isMonitored).length);
+  readonly onlinePercent = computed(() => {
     const total = this.totalDevices();
-    return total ? Number(((this.onlineDevices() / total) * 100).toFixed(1)) : 0;
-  }
+    return total ? Math.round((this.onlineDevices() / total) * 100) : 0;
+  });
+  readonly activeAlerts = computed(() => this.summary()?.alertsTriggeredLast24h ?? 0);
+  readonly activeRules = computed(() => this.summary()?.activeAlertRules ?? 0);
 
-  get deviceHealth() {
+  readonly donut = computed(() => {
     const circumference = 2 * Math.PI * 40;
     const total = this.totalDevices() || 1;
-    const dash = (value: number) => `${(circumference * value / total).toFixed(2)} ${circumference.toFixed(2)}`;
+    const dash = (value: number) => `${((circumference * value) / total).toFixed(2)} ${circumference.toFixed(2)}`;
     const online = this.onlineDevices();
-    const warning = this.warningDevices();
+    const offline = this.offlineDevices();
     return {
       onlineDash: dash(online),
-      warningDash: dash(warning),
-      warningOffset: `-${(circumference * online / total).toFixed(2)}`,
-      offlineDash: dash(this.offlineDevices()),
-      offlineOffset: `-${(circumference * (online + warning) / total).toFixed(2)}`,
+      offlineDash: dash(offline),
+      offlineOffset: `-${((circumference * online) / total).toFixed(2)}`,
+      unknownDash: dash(this.unknownDevices()),
+      unknownOffset: `-${((circumference * (online + offline)) / total).toFixed(2)}`,
     };
+  });
+
+  readonly chartStats = computed(() => {
+    const values = this.chartSeries()[0]?.values.filter((value): value is number => value != null) ?? [];
+    if (!values.length) return null;
+    return {
+      average: values.reduce((sum, value) => sum + value, 0) / values.length,
+      peak: Math.max(...values),
+    };
+  });
+
+  ngOnInit(): void {
+    this.loadOverview();
+
+    this.signalr
+      .connect()
+      .then(() => this.signalr.deviceStatus$.subscribe((update) => this.applyLiveStatus(update)))
+      .catch((err) => console.warn('Live updates unavailable:', err));
   }
 
-  selectNav(label: string) {
-    const paths: Record<string, string> = { Overview: '/', Devices: '/devices', 'Event log': '/logs', Settings: '/settings', Alerts: '/alerts/rules' };
-    this.activeNav.set(label);
-    this.sidebarOpen.set(false);
-    if (paths[label]) this.router.navigateByUrl(paths[label]);
+  setRange(range: string): void {
+    if (this.range() === range) return;
+    this.range.set(range);
+    this.loadPerformance();
+  }
+
+  latency(row: DeviceRow): string {
+    return row.latencyMs == null ? '—' : `${Math.round(row.latencyMs)} ms`;
+  }
+
+  statusOf(row: DeviceRow): 'Online' | 'Offline' | 'Paused' | 'Unknown' {
+    if (!row.isMonitored) return 'Paused';
+    if (row.isOnline === true) return 'Online';
+    if (row.isOnline === false) return 'Offline';
+    return 'Unknown';
+  }
+
+  badgeClass(row: DeviceRow): string {
+    switch (this.statusOf(row)) {
+      case 'Online':
+        return 'badge-ok';
+      case 'Offline':
+        return 'badge-danger';
+      case 'Paused':
+        return 'badge-muted';
+      default:
+        return 'badge-warn';
+    }
+  }
+
+  private loadOverview(): void {
+    this.loading.set(true);
+    this.error.set(null);
+
+    forkJoin({
+      summary: this.monitoring.getSummary(),
+      devices: this.deviceApi.getAll({ page: 1, pageSize: 100 }),
+      statuses: this.monitoring.getStatus(),
+    }).subscribe({
+      next: ({ summary, devices, statuses }) => {
+        this.summary.set(summary);
+        this.rows.set(this.toRows(devices.items, statuses));
+        this.loading.set(false);
+        this.loadPerformance();
+      },
+      error: () => {
+        this.error.set('Unable to load the dashboard right now. Check that the API is running.');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  private loadPerformance(): void {
+    const devices = this.rows();
+    const hours = RANGE_HOURS[this.range()] ?? 24;
+    const to = new Date();
+    const from = new Date(to.getTime() - hours * 60 * 60 * 1000);
+
+    if (!devices.length) {
+      this.chartSeries.set([]);
+      this.chartLabels.set([]);
+      return;
+    }
+
+    this.chartLoading.set(true);
+
+    forkJoin(
+      devices.map((device) =>
+        this.monitoring
+          .getPingHistory(device.id, from.toISOString(), to.toISOString())
+          .pipe(catchError(() => of([]))),
+      ),
+    ).subscribe({
+      next: (histories) => {
+        const sums = new Array<number>(BUCKETS).fill(0);
+        const counts = new Array<number>(BUCKETS).fill(0);
+        const bucketMs = (to.getTime() - from.getTime()) / BUCKETS;
+
+        histories.forEach((points) => {
+          points.forEach((point) => {
+            if (point.latencyMs == null) return;
+            const time = new Date(point.checkedAt).getTime();
+            const index = Math.floor((time - from.getTime()) / bucketMs);
+            if (index < 0 || index >= BUCKETS) return;
+            sums[index] += point.latencyMs;
+            counts[index] += 1;
+          });
+        });
+
+        this.chartLabels.set(
+          Array.from({ length: BUCKETS }, (_, index) =>
+            this.bucketLabel(new Date(from.getTime() + index * bucketMs), hours > 24),
+          ),
+        );
+        this.chartSeries.set([
+          {
+            name: 'Average latency',
+            color: '#6d4aff',
+            values: sums.map((sum, index) => (counts[index] ? sum / counts[index] : null)),
+          },
+        ]);
+        this.chartLoading.set(false);
+      },
+      error: () => this.chartLoading.set(false),
+    });
+  }
+
+  private toRows(devices: Devices[], statuses: DeviceStatus[]): DeviceRow[] {
+    const byId = new Map(statuses.map((status) => [status.deviceId, status]));
+
+    return devices.map((device) => {
+      const status = byId.get(device.id);
+      return {
+        id: device.id,
+        name: device.name,
+        type: device.deviceType,
+        location: device.location ?? '—',
+        ip: device.ipAddress,
+        isMonitored: device.isMonitored,
+        isOnline: status?.isOnline,
+        latencyMs: status?.latencyMs,
+        lastCheckedAt: status?.checkedAt,
+      };
+    });
+  }
+
+  private applyLiveStatus(update: DeviceStatusUpdate): void {
+    this.rows.update((rows) =>
+      rows.map((row) =>
+        row.id === update.deviceId
+          ? {
+              ...row,
+              isOnline: update.isOnline,
+              latencyMs: update.latencyMs,
+              lastCheckedAt: update.timestampUtc,
+            }
+          : row,
+      ),
+    );
+  }
+
+  private bucketLabel(date: Date, includeDay: boolean): string {
+    return includeDay
+      ? date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+      : date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   }
 }

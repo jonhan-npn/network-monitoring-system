@@ -10,8 +10,10 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
   styleUrl: './login.css',
 })
 export class Login {
+  readonly year = new Date().getFullYear();
   readonly isLoading = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly showPassword = signal(false);
 
   readonly form;
 
@@ -40,15 +42,15 @@ export class Login {
 
     this.authService.login({ username: username!, password: password! }).subscribe({
       next: () => {
-        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/dashboard';
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/';
         this.router.navigateByUrl(returnUrl);
       },
       error: (err) => {
         this.isLoading.set(false);
         this.errorMessage.set(
           err?.status === 401
-            ? 'Incorrect email or password.'
-            : 'Could not sign in. Check your connection and try again.',
+            ? 'Incorrect username or password.'
+            : err?.friendlyMessage ?? 'Could not sign in. Check your connection and try again.',
         );
       },
       complete: () => this.isLoading.set(false),

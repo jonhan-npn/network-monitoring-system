@@ -1,0 +1,53 @@
+<div class="line-chart">
+  @if (hasData()) {
+    <div class="chart-head">
+      <div class="chart-legend">
+        @for (item of view().series; track item.name) {
+          <span><i [style.background]="item.color"></i>{{ item.name }}</span>
+        }
+      </div>
+    </div>
+
+    <svg
+      class="chart-svg"
+      [attr.viewBox]="'0 0 ' + width + ' ' + height()"
+      preserveAspectRatio="xMidYMid meet"
+      role="img"
+      aria-label="Line chart"
+    >
+      @for (line of view().gridY; track $index) {
+        <line class="grid" x1="46" [attr.y1]="line.y" [attr.x2]="width - 16" [attr.y2]="line.y" />
+        <text class="axis" x="6" [attr.y]="line.y + 3.5">{{ line.label }}</text>
+      }
+
+      @for (item of view().series; track item.name) {
+        @for (area of item.areas; track $index) {
+          <path [attr.d]="area" [attr.fill]="item.color" opacity="0.09" />
+        }
+        @for (path of item.lines; track $index) {
+          <path
+            [attr.d]="path"
+            fill="none"
+            [attr.stroke]="item.color"
+            stroke-width="2.1"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        }
+      }
+
+      @for (tick of view().xTicks; track $index) {
+        <text class="axis" [attr.x]="tick.x" [attr.y]="height() - 8" text-anchor="middle">
+          {{ tick.label }}
+        </text>
+      }
+    </svg>
+  } @else {
+    <div class="chart-empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M3 12h4l3 8 4-16 3 8h4" />
+      </svg>
+      <span>{{ emptyLabel() }}</span>
+    </div>
+  }
+</div>

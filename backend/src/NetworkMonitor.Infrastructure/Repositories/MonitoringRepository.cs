@@ -75,6 +75,25 @@ public class MonitoringRepository : IMonitoringRepository
             .OrderByDescending(r => r.SampledAt)
             .FirstOrDefaultAsync(cancellationToken);
 
+    public async Task<IReadOnlyDictionary<Guid, ResourceSample>> GetLatestResourceSamplesAsync(
+        IReadOnlyList<Guid> deviceIds, CancellationToken cancellationToken = default)
+    {
+        if (deviceIds.Count == 0)
+        {
+            return new Dictionary<Guid, ResourceSample>();
+        }
+
+        // Same GroupBy/MaxBy strategy as GetLatestPingResultsAsync above.
+        var latestPerDevice = await _db.ResourceSamples
+            .AsNoTracking()
+            .Where(r => deviceIds.Contains(r.DeviceId))
+            .GroupBy(r => r.DeviceId)
+            .Select(g => g.OrderByDescending(r => r.SampledAt).First())
+            .ToListAsync(cancellationToken);
+
+        return latestPerDevice.ToDictionary(r => r.DeviceId);
+    }
+
     // ---- Retention ----
 
     public Task<int> PurgeOldPingResultsAsync(DateTime olderThan, CancellationToken cancellationToken = default) =>

@@ -1,1 +1,120 @@
-<div class="workspace-page"><header class="page-topbar"><a routerLink="/" class="page-brand">netwatch</a><nav class="page-nav"><a routerLink="/">Overview</a><a routerLink="/devices">Devices</a><a routerLink="/logs" class="active">Event log</a><a routerLink="/alerts/rules">Alerts</a></nav></header><main class="page-content"><div class="page-heading"><div><h1>Event log</h1><p>Review monitoring activity and configuration changes.</p></div></div><section class="card"><div class="toolbar"><input class="search-input" [ngModel]="query()" (ngModelChange)="query.set($event)" (keyup.enter)="load()" placeholder="Search events"><button (click)="load()">Search</button></div>@if (error()) {<p class="empty-state">{{ error() }}</p>} @else if (loading()) {<p class="empty-state">Loading events…</p>} @else {<div class="table-scroll"><table class="data-table"><thead><tr><th>TIME</th><th>EVENT</th><th>DEVICE</th><th>DETAIL</th></tr></thead><tbody>@for(event of events(); track event.id){<tr><td>{{ event.occurredAt | date:'medium' }}</td><td><strong>{{ event.eventType }}</strong></td><td>{{ event.deviceName || 'System' }}</td><td>{{ event.message }}</td></tr>} @empty {<tr><td colspan="4"><div class="empty-state">No events found.</div></td></tr>}</tbody></table></div><footer class="table-footer">{{ totalCount() }} events</footer>}</section></main></div>
+<div class="page">
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">Activity</p>
+      <h1 class="page-title">Event log</h1>
+      <p class="page-subtitle">Status changes, alert deliveries, and configuration edits recorded by the API.</p>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="toolbar">
+      <select class="select filter" [ngModel]="deviceId()" (ngModelChange)="deviceId.set($event); applyFilters()">
+        <option value="">All devices</option>
+        @for (device of devices(); track device.id) {
+          <option [value]="device.id">{{ device.name }}</option>
+        }
+      </select>
+
+      <select class="select filter" [ngModel]="eventType()" (ngModelChange)="eventType.set($event); applyFilters()">
+        <option value="">All event types</option>
+        @for (type of eventTypes; track type) {
+          <option [value]="type">{{ typeLabels[type] ?? type }}</option>
+        }
+      </select>
+
+      <label class="date-field">
+        <span>From</span>
+        <input class="input" type="date" [ngModel]="from()" (ngModelChange)="from.set($event); applyFilters()" />
+      </label>
+
+      <label class="date-field">
+        <span>To</span>
+        <input class="input" type="date" [ngModel]="to()" (ngModelChange)="to.set($event); applyFilters()" />
+      </label>
+
+      @if (hasFilters()) {
+        <button type="button" class="btn btn-ghost" (click)="clearFilters()">Clear</button>
+      }
+    </div>
+
+    @if (error()) {
+      <div class="empty">
+        <strong>{{ error() }}</strong>
+        <button type="button" class="btn btn-secondary btn-sm" (click)="load()">Retry</button>
+      </div>
+    } @else if (loading()) {
+      <div style="padding: 18px">
+        @for (row of [1, 2, 3, 4, 5]; track row) {
+          <div class="skeleton" style="height: 44px; margin-bottom: 8px"></div>
+        }
+      </div>
+    } @else if (!events().length) {
+      <div class="empty">
+        <span class="empty-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <path d="M3 12h4l3 8 4-16 3 8h4" />
+          </svg>
+        </span>
+        @if (hasFilters()) {
+          <strong>No events match those filters</strong>
+          <span>Try a wider date range or a different event type.</span>
+          <button type="button" class="btn btn-secondary btn-sm" (click)="clearFilters()">Clear filters</button>
+        } @else {
+          <strong>No events recorded yet</strong>
+          <span>Device status changes and configuration edits will appear here.</span>
+        }
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Event</th>
+              <th>Device</th>
+              <th>Detail</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (event of events(); track event.id) {
+              <tr>
+                <td style="white-space: nowrap">{{ event.occurredAt | date: 'medium' }}</td>
+                <td>
+                  <span class="event-cell">
+                    <span class="event-dot" [class]="badgeFor(event.eventType)">{{ eventIcon(event.eventType) }}</span>
+                    <span>
+                      <strong>{{ labelFor(event.eventType) }}</strong>
+                      <small>{{ event.eventType }}</small>
+                    </span>
+                  </span>
+                </td>
+                <td>
+                  @if (event.deviceId) {
+                    <a [routerLink]="['/devices', event.deviceId]" class="device-link">{{ event.deviceName || 'Device' }}</a>
+                  } @else {
+                    <span class="muted">System</span>
+                  }
+                </td>
+                <td class="detail-cell">{{ event.message }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-footer">
+        <span>Showing {{ rangeStart() }}–{{ rangeEnd() }} of {{ totalCount() }} event(s)</span>
+        <div class="pager">
+          <button type="button" [disabled]="page() === 1" (click)="goToPage(page() - 1)">‹</button>
+          @for (number of pageNumbers(); track number) {
+            <button type="button" [class.current]="number === page()" (click)="goToPage(number)">
+              {{ number }}
+            </button>
+          }
+          <button type="button" [disabled]="page() === pages()" (click)="goToPage(page() + 1)">›</button>
+        </div>
+      </div>
+    }
+  </section>
+</div>

@@ -1,0 +1,27 @@
+# Keep the Docker build context small and avoid leaking local secrets.
+
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+
+# .NET build output
+**/bin
+**/obj
+
+# Node / Angular
+**/node_modules
+**/dist
+**/.angular
+
+# Docs and editor files are not needed inside the images
+docs
+**/*.md
+.vscode
+.idea
+.vs
+
+# OS junk
+.DS_Store
+Thumbs.db

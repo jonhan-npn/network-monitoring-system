@@ -1,13 +1,121 @@
-<div class="workspace-page">
-  <header class="page-topbar"><a routerLink="/" class="page-brand">netwatch</a><nav class="page-nav"><a routerLink="/">Overview</a><a routerLink="/devices">Devices</a><a routerLink="/logs">Event log</a><a routerLink="/settings" class="active">Settings</a><a routerLink="/users">Users</a></nav><span class="page-user"><i>JM</i> Johan M.</span></header>
-  <main class="page-content"><div class="page-heading"><div><h1>Settings</h1><p>Configure monitoring, notifications, and your workspace.</p></div><button class="primary-button" (click)="save()">Save changes</button></div>
-    @if(saved()){<div class="success">✓ Settings saved successfully.</div>}
-    <div class="settings-layout"><aside class="settings-nav"><button class="active">General</button><button>Monitoring</button><button>Notifications</button><button>Security</button></aside>
-      <div class="settings-content">
-        <section class="card settings-card"><h2>Monitoring</h2><p class="section-help">Control how often devices are checked across your network.</p><div class="form-grid"><label>Ping interval <span>How frequently devices are checked</span><div><input type="number" [(ngModel)]="monitoringInterval" min="10"><b>seconds</b></div></label><label>Timeout <span>Wait time before marking a check as failed</span><div><input type="number" [(ngModel)]="timeout" min="1"><b>seconds</b></div></label></div></section>
-        <section class="card settings-card"><h2>Notifications</h2><p class="section-help">Choose where critical device and threshold alerts are delivered.</p><div class="setting-row"><div><strong>Email alerts</strong><span>Send alerts to your configured email recipients</span></div><button class="toggle" [class.on]="emailAlerts" (click)="emailAlerts=!emailAlerts"><i></i></button></div><div class="setting-row"><div><strong>Telegram alerts</strong><span>Send instant notifications to a Telegram channel</span></div><button class="toggle" [class.on]="telegramAlerts" (click)="telegramAlerts=!telegramAlerts"><i></i></button></div></section>
-        <section class="card settings-card"><h2>Maintenance mode</h2><p class="section-help">Pause alerts while planned maintenance is in progress.</p><div class="setting-row"><div><strong>Suppress alerts</strong><span>Monitoring continues, but no alert notifications will be sent</span></div><button class="toggle" [class.on]="maintenanceMode" (click)="maintenanceMode=!maintenanceMode"><i></i></button></div></section>
-      </div>
+<div class="page" style="max-width: 1080px">
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">Workspace</p>
+      <h1 class="page-title">Settings</h1>
+      <p class="page-subtitle">Your account, connection health, and the server-side configuration that drives monitoring.</p>
     </div>
-  </main>
+    <a routerLink="/alerts/rules" class="btn btn-secondary">Alert rules</a>
+  </div>
+
+  <div class="settings-grid">
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2 class="panel-title">Account</h2>
+          <p class="panel-sub">You are signed in with a JWT bearer token.</p>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="account">
+          <span class="account-avatar">{{ initials() }}</span>
+          <div>
+            <strong>{{ user()?.username || 'Unknown user' }}</strong>
+            <small>{{ user()?.email || 'No email on file' }}</small>
+          </div>
+          <span class="badge badge-brand badge-plain">{{ role() }}</span>
+        </div>
+
+        <dl class="kv" style="margin-top: 20px">
+          <div>
+            <dt>User ID</dt>
+            <dd class="mono">{{ user()?.id || '—' }}</dd>
+          </div>
+          <div>
+            <dt>Role</dt>
+            <dd>{{ role() }}</dd>
+          </div>
+          <div>
+            <dt>Session storage</dt>
+            <dd>localStorage · nm_token</dd>
+          </div>
+          <div>
+            <dt>Sign-in mode</dt>
+            <dd>{{ authEnabled ? 'Authentication required' : 'Authentication disabled' }}</dd>
+          </div>
+        </dl>
+
+        <div class="panel-actions">
+          <button type="button" class="btn btn-secondary" (click)="logout()">Sign out</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2 class="panel-title">Connection</h2>
+          <p class="panel-sub">Where this browser talks to the API and hub.</p>
+        </div>
+        <span
+          class="badge"
+          [class]="connection() === 'ok' ? 'badge-ok' : connection() === 'error' ? 'badge-danger' : 'badge-muted'"
+        >
+          {{ connection() === 'ok' ? 'Connected' : connection() === 'error' ? 'Unreachable' : connection() === 'checking' ? 'Checking…' : 'Not checked' }}
+        </span>
+      </div>
+      <div class="panel-body">
+        <dl class="kv">
+          <div>
+            <dt>API base URL</dt>
+            <dd class="mono">{{ apiUrl }}</dd>
+          </div>
+          <div>
+            <dt>SignalR hub</dt>
+            <dd class="mono">{{ hubUrl }}</dd>
+          </div>
+          <div>
+            <dt>Last check</dt>
+            <dd>{{ checkedAt() ? (checkedAt() | date: 'medium') : 'Never' }}</dd>
+          </div>
+          <div>
+            <dt>Auth</dt>
+            <dd>{{ authEnabled ? 'Enabled' : 'Disabled' }}</dd>
+          </div>
+        </dl>
+
+        <div class="panel-actions">
+          <button type="button" class="btn btn-secondary" [disabled]="connection() === 'checking'" (click)="checkConnection()">
+            {{ connection() === 'checking' ? 'Checking…' : 'Check API' }}
+          </button>
+          <button type="button" class="btn btn-ghost" (click)="testLiveUpdates()">Test live updates</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel settings-wide">
+      <div class="panel-head">
+        <div>
+          <h2 class="panel-title">Server configuration</h2>
+          <p class="panel-sub">Read-only deployment defaults. Change these in the server configuration and redeploy.</p>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="config-grid">
+          @for (item of serverConfig; track item.label) {
+            <div class="config-item">
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+            </div>
+          }
+        </div>
+        <div class="alert alert-info" style="margin-top: 18px">
+          Notification channels are configured on the server (SMTP and Telegram bot credentials). Use
+          <a routerLink="/alerts/rules" class="inline-link">Alert rules → Send test alert</a> to confirm delivery.
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <p class="settings-foot">Netwatch · {{ year }}</p>
 </div>

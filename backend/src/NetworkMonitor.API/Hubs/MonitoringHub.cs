@@ -10,7 +10,7 @@ namespace NetworkMonitor.API.Hubs;
 /// subscribes to receive them without polling.
 /// </summary>
 [Authorize]
-public class MonitoringHub : Hub
+public class MonitoringHub : Hub<IMonitoringClient>
 {
     /// <summary>
     /// Clients call this after connecting to join a group for a specific
@@ -54,11 +54,11 @@ public interface IMonitoringClient
 {
     Task DeviceStatusChanged(DeviceStatusUpdate update);
     Task ResourceSampleReceived(ResourceSampleUpdate update);
-    Task AlertRaised(AlertNotification alert);
+    Task AlertTriggered(AlertTriggeredUpdate alert);
 }
 
-public record DeviceStatusUpdate(Guid DeviceId, string Name, bool IsOnline, DateTimeOffset TimestampUtc, long? LatencyMs);
+public record DeviceStatusUpdate(Guid DeviceId, string Name, bool IsOnline, DateTimeOffset TimestampUtc, double? LatencyMs);
 
 public record ResourceSampleUpdate(Guid DeviceId, DateTimeOffset TimestampUtc, double? CpuPercent, double? RamPercent);
 
-public record AlertNotification(Guid DeviceId, string Name, string RuleName, string Severity, string Message, DateTimeOffset TimestampUtc);
+public record AlertTriggeredUpdate(Guid RuleId, Guid? DeviceId, string Metric, string Message, DateTimeOffset TimestampUtc);

@@ -8,8 +8,8 @@ a single Postgres database and a common set of backend libraries:
 | Unit | Technology | Responsibility |
 |---|---|---|
 | **Frontend** | Angular, served by Nginx | Login UI, device CRUD, live dashboard, charts |
-| **API** | ASP.NET Core (.NET 9) | REST endpoints, JWT auth, SignalR hub for live updates |
-| **Worker** | ASP.NET Core (.NET 9) hosted service | Background polling: ping sweep, SNMP, SSH inventory, alert threshold engine |
+| **API** | ASP.NET Core (.NET 10) | REST endpoints, JWT auth, SignalR hub for live updates |
+| **Worker** | ASP.NET Core (.NET 10) hosted service | Background polling: ping sweep, SNMP, SSH inventory, alert threshold engine |
 
 The API and Worker are separate processes (separate containers) but share
 the same `NetworkMonitor.Domain`, `NetworkMonitor.Application`, and
@@ -17,10 +17,12 @@ the same `NetworkMonitor.Domain`, `NetworkMonitor.Application`, and
 
 - The Worker can write directly to Postgres via the same `AppDbContext` and
   repositories the API uses to read.
-- Neither process talks to the other over HTTP — they're decoupled through
-  the database. The API becomes aware of new ping results or resource
-  samples either by polling the DB or by having the Worker publish over
-  SignalR (see below).
+- The main integration path is the database: the Worker writes ping results
+  and resource samples, and the API reads them. The one exception is live
+  updates — the Worker POSTs to the API's internal-only
+  `/internal/notifications/*` endpoints (shared-secret authenticated), and
+  the API fans those out to browsers over SignalR. See
+  `HttpRealtimeNotifier` and `InternalNotificationsController`.
 - Scaling the Worker (e.g. splitting ping/SNMP/SSH into separate workers
   later) doesn't require touching the API at all.
 
@@ -56,7 +58,8 @@ flowchart LR
     HUB --> A
     W -- ICMP / SNMP / SSH --> DEV
     W --> PG
-    W -- publishes status changes --> HUB
+    W -- "POST /internal/notifications/*" --> API
+    API -- SignalR push --> HUB
     W -- threshold breach --> MAIL
 ```
 
@@ -113,9 +116,12 @@ without creating a cycle.
 4. On a status *change* (online→offline or vice versa), an
    `EventLogEntry` is written and a `DeviceWentOfflineEvent` /
    `DeviceCameOnlineEvent` domain event fires.
-5. That event is picked up by the alert threshold engine (email/Telegram)
-   and pushed to connected Angular clients through the SignalR hub, so the
-   dashboard updates without a page refresh.
+5. On a status *change* (online→offline or vice versa), an
+   `EventLogEntry` is written. Every sweep (not only transitions) is also
+   posted to `POST /internal/notifications/device-status`; the API forwards
+   it to connected Angular clients through the SignalR hub, so the dashboard
+   updates without a page refresh. Alerts (email/Telegram) are evaluated by
+   the Worker's threshold engine when a transition occurs.
 
 ## Why SignalR instead of polling from Angular
 

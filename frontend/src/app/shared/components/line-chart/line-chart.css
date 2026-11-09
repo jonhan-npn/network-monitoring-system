@@ -1,0 +1,47 @@
+.line-chart {
+  width: 100%;
+}
+
+.chart-head {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 6px;
+}
+
+.chart-svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.grid {
+  stroke: #eef1f6;
+  stroke-width: 1;
+}
+
+.axis {
+  fill: #98a1b2;
+  font-size: 10px;
+  font-family: inherit;
+}
+
+.chart-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 190px;
+  padding: 24px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 12.5px;
+  text-align: center;
+}
+
+.chart-empty svg {
+  width: 30px;
+  height: 30px;
+  color: #b9c1d0;
+}

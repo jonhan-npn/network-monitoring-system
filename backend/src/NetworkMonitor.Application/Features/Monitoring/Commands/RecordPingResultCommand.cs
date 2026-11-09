@@ -76,7 +76,7 @@ public class RecordPingResultCommandHandler : IRequestHandler<RecordPingResultCo
         // "last checked" timestamp stays current — but the Worker only needs
         // to run the alert engine when StatusChanged is true.
         await _realtimeNotifier.NotifyDeviceStatusChangedAsync(
-            new DeviceStatusChangedNotification(request.DeviceId, request.IsOnline, request.CheckedAt),
+            new DeviceStatusChangedNotification(request.DeviceId, request.DeviceName, request.IsOnline, request.LatencyMs, request.CheckedAt),
             cancellationToken);
 
         return new RecordPingResultResult(evaluation.StatusChanged, request.IsOnline);

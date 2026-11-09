@@ -1,6 +1,6 @@
 namespace NetworkMonitor.Application.Interfaces;
 
-public record DeviceStatusChangedNotification(Guid DeviceId, bool IsOnline, DateTime CheckedAt);
+public record DeviceStatusChangedNotification(Guid DeviceId, string DeviceName, bool IsOnline, double? LatencyMs, DateTime CheckedAt);
 public record ResourceSampleReceivedNotification(Guid DeviceId, double? CpuPercent, double? MemoryPercent, DateTime SampledAt);
 public record AlertTriggeredNotification(Guid RuleId, Guid? DeviceId, string Metric, string Message, DateTime TriggeredAt);
 

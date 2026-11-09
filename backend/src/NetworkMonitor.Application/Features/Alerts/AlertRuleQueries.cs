@@ -7,7 +7,7 @@ namespace NetworkMonitor.Application.Features.Alerts;
 
 public record GetAlertRulesQuery : IRequest<IReadOnlyList<AlertRuleDto>>;
 
-public record GetAlertHistoryQuery(int Page, int PageSize) : IRequest<Common.Models.PagedResult<AlertHistoryItemDto>>;
+public record GetAlertHistoryQuery(int Page, int PageSize, Guid? DeviceId = null) : IRequest<Common.Models.PagedResult<AlertHistoryItemDto>>;
 
 public class GetAlertRulesQueryHandler : IRequestHandler<GetAlertRulesQuery, IReadOnlyList<AlertRuleDto>>
 {
@@ -45,7 +45,7 @@ public class GetAlertHistoryQueryHandler : IRequestHandler<GetAlertHistoryQuery,
         var (entries, totalCount) = await _eventLogRepository.GetPagedAsync(
             request.Page,
             request.PageSize,
-            deviceId: null,
+            deviceId: request.DeviceId,
             eventType: Domain.Enums.EventType.AlertSent,
             from: null,
             to: null,

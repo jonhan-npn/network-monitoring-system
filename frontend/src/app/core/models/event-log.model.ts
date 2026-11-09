@@ -8,11 +8,15 @@ export enum EventType {
   UserLoggedIn = 'UserLoggedIn',
 }
 
-export enum EventSeverity {
-  Info = 'Info',
-  Warning = 'Warning',
-  Critical = 'Critical',
-}
+export const EVENT_TYPE_LABELS: Record<string, string> = {
+  DeviceOnline: 'Device online',
+  DeviceOffline: 'Device offline',
+  DeviceCreated: 'Device created',
+  DeviceUpdated: 'Device updated',
+  DeviceDeleted: 'Device deleted',
+  AlertTriggered: 'Alert triggered',
+  UserLoggedIn: 'User signed in',
+};
 
 export interface EventLogEntry {
   id: string | number;
@@ -23,11 +27,10 @@ export interface EventLogEntry {
   occurredAt: string; // ISO date string
 }
 
-// Query params accepted by GET /api/logs
+// Query params accepted by GET /api/monitoring/events
 export interface EventLogQuery {
   deviceId?: string;
-  eventType?: EventType;
-  severity?: EventSeverity;
+  eventType?: EventType | string;
   from?: string;
   to?: string;
   page?: number;

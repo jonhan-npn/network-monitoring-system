@@ -1,1 +1,87 @@
-<main class="workspace-page page-content"><p><a routerLink="/alerts/rules">← Alert rules</a></p><h1>Alert history</h1>@if(error()){<p>{{error()}}</p>}<section class="card"><table class="data-table"><thead><tr><th>TIME</th><th>RULE</th><th>DEVICE</th><th>MESSAGE</th><th>CHANNEL</th></tr></thead><tbody>@for(item of history();track item.id){<tr><td>{{item.triggeredAt | date:'medium'}}</td><td>{{item.ruleName}}</td><td>{{item.deviceName || 'All devices'}}</td><td>{{item.message}}</td><td>{{item.channel}}</td></tr>}@empty{<tr><td colspan="5">No alerts have been sent.</td></tr>}</tbody></table></section></main>
+<div class="page">
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">Alerting</p>
+      <h1 class="page-title">Alert history</h1>
+      <p class="page-subtitle">Every alert the worker has delivered, newest first.</p>
+    </div>
+    <a routerLink="/alerts/rules" class="btn btn-secondary">Manage rules</a>
+  </div>
+
+  <section class="panel">
+    <div class="toolbar">
+      <select class="select filter" [ngModel]="deviceId()" (ngModelChange)="deviceId.set($event); applyFilter()">
+        <option value="">All devices</option>
+        @for (device of devices(); track device.id) {
+          <option [value]="device.id">{{ device.name }} · {{ device.ipAddress }}</option>
+        }
+      </select>
+      <span class="toolbar-note">{{ totalCount() }} alert(s) delivered</span>
+    </div>
+
+    @if (error()) {
+      <div class="empty">
+        <strong>{{ error() }}</strong>
+        <button type="button" class="btn btn-secondary btn-sm" (click)="load()">Retry</button>
+      </div>
+    } @else if (loading()) {
+      <div style="padding: 18px">
+        @for (row of [1, 2, 3, 4]; track row) {
+          <div class="skeleton" style="height: 46px; margin-bottom: 8px"></div>
+        }
+      </div>
+    } @else if (!history().length) {
+      <div class="empty">
+        <span class="empty-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <path d="M18 8a6 6 0 0 0-12 0c0 6-2 7-2 8h16c0-1-2-2-2-8" />
+            <path d="M13.7 20a2 2 0 0 1-3.4 0" />
+          </svg>
+        </span>
+        <strong>No alerts delivered yet</strong>
+        <span>When a rule crosses its threshold, the delivery is recorded here.</span>
+        <a routerLink="/alerts/rules" class="btn btn-secondary btn-sm">Review alert rules</a>
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Triggered</th>
+              <th>Rule</th>
+              <th>Device</th>
+              <th>Message</th>
+              <th>Channel</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of history(); track item.id) {
+              <tr>
+                <td style="white-space: nowrap">{{ item.triggeredAt | date: 'medium' }}</td>
+                <td>{{ item.ruleName }}</td>
+                <td>{{ item.deviceName || 'All devices' }}</td>
+                <td class="message-cell">{{ item.message }}</td>
+                <td>
+                  <span class="badge badge-plain" [class]="badgeForChannel(item.channel)">{{ item.channel }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-footer">
+        <span>Showing {{ rangeStart() }}–{{ rangeEnd() }} of {{ totalCount() }}</span>
+        <div class="pager">
+          <button type="button" [disabled]="page() === 1" (click)="goToPage(page() - 1)">‹</button>
+          @for (number of pageNumbers(); track number) {
+            <button type="button" [class.current]="number === page()" (click)="goToPage(number)">
+              {{ number }}
+            </button>
+          }
+          <button type="button" [disabled]="page() === pages()" (click)="goToPage(page() + 1)">›</button>
+        </div>
+      </div>
+    }
+  </section>
+</div>

@@ -2,28 +2,26 @@ import { Component, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { Router, RouterLink } from '@angular/router';
-import { CommonModule } from '@angular/common';
-
 
 function passwordsMatchValidator(): ValidatorFn {
   return (group: AbstractControl): ValidationErrors | null => {
     const password = group.get('password')?.value;
     const confirmPassword = group.get('confirmPassword')?.value;
-    return password && confirmPassword && password !== confirmPassword
-      ? { passwordMismatch: true }
-      : null;
+    return password && confirmPassword && password !== confirmPassword ? { passwordMismatch: true } : null;
   };
 }
 
 @Component({
   selector: 'app-register',
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './register.html',
   styleUrl: './register.css',
 })
 export class Register {
+  readonly year = new Date().getFullYear();
   readonly isLoading = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly showPassword = signal(false);
 
   readonly form;
 
@@ -54,20 +52,18 @@ export class Register {
 
     const { username, email, password } = this.form.getRawValue();
 
-    this.authService
-      .register({ username: username!, email: email!, password: password! })
-      .subscribe({
-        next: () => this.router.navigateByUrl('/dashboard'),
-        error: (err) => {
-          this.isLoading.set(false);
-          this.errorMessage.set(
-            err?.status === 409
-              ? 'An account with that email already exists.'
-              : 'Could not create your account. Please try again.',
-          );
-        },
-        complete: () => this.isLoading.set(false),
-      });
+    this.authService.register({ username: username!, email: email!, password: password! }).subscribe({
+      next: () => this.router.navigateByUrl('/'),
+      error: (err) => {
+        this.isLoading.set(false);
+        this.errorMessage.set(
+          err?.status === 409
+            ? 'That username or email is already registered.'
+            : err?.friendlyMessage ?? 'Could not create your account. Please try again.',
+        );
+      },
+      complete: () => this.isLoading.set(false),
+    });
   }
 
   get username() {

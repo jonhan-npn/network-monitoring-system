@@ -19,6 +19,7 @@ public static class DeviceMappingExtensions
         SnmpVersion = device.SnmpVersion,
         SshPort = device.SshPort,
         SshUsername = device.SshUsername,
+        SshCredentialRef = device.SshCredentialRef,
         IsMonitored = device.IsMonitored,
         CreatedAt = device.CreatedAt,
         UpdatedAt = device.UpdatedAt,
@@ -35,6 +36,7 @@ public static class DeviceMappingExtensions
         IpAddress = device.IpAddress,
         DeviceType = device.DeviceType.ToString(),
         Location = device.Location,
+        Description = device.Description,
         IsMonitored = device.IsMonitored,
         IsOnline = isOnline,
         LastCheckedAt = lastCheckedAt

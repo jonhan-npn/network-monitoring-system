@@ -21,9 +21,11 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 var app = builder.Build();
 
 // ---- Apply pending EF Core migrations automatically on startup ----------
-// Convenient for a self-contained Docker Compose deployment; disable this
-// and run `dotnet ef database update` manually in a stricter environment.
-if (app.Configuration.GetValue("Database:MigrateOnStartup", true))
+// Default is OFF: this project's day-zero schema comes from
+// infrastructure/postgres/init.sql and there are no EF migrations yet.
+// Once you add migrations (dotnet ef migrations add ...), either set
+// Database:MigrateOnStartup=true or run `dotnet ef database update` yourself.
+if (app.Configuration.GetValue("Database:MigrateOnStartup", false))
 {
     using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -34,6 +36,7 @@ if (app.Configuration.GetValue("Database:MigrateOnStartup", true))
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
 
+//if (app.Configuration.GetValue("Swagger:Enabled", app.Environment.IsDevelopment()))
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -43,7 +46,14 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+// TLS normally terminates at Nginx / an upstream load balancer in front of
+// this container. Redirecting to HTTPS here would send clients to a port the
+// container doesn't listen on, so only enable it when explicitly configured.
+if (app.Configuration.GetValue("Https:Redirect", false))
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseCors("Frontend");
 
 app.UseAuthentication();

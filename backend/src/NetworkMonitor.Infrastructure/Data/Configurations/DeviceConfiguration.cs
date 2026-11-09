@@ -11,6 +11,7 @@ public class DeviceConfiguration : IEntityTypeConfiguration<Device>
         builder.ToTable("devices");
 
         builder.HasKey(d => d.Id);
+        builder.Property(d => d.Id).HasColumnName("id");
 
         builder.Property(d => d.Name).HasColumnName("name").HasMaxLength(128).IsRequired();
 

@@ -1,19 +1,26 @@
+import { HttpParams } from '@angular/common/http';
+import { DeviceQuery, CreateDeviceRequest, Devices, UpdateDeviceRequest } from '../models/device.model';
+import { PagedResult } from '../models/event-log.model';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { environment } from '../../../environments/environment';
 import { Observable } from 'rxjs';
-import { CreateDeviceRequest,Devices, UpdateDeviceRequest } from '../models/device.model';
-import { PagedResult } from '../models/event-log.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class Device {
-    private readonly apiUrl = `${environment.apiUrl}/devices`;
+  private readonly apiUrl = `${environment.apiUrl}/devices`;
 
   constructor(private readonly http: HttpClient) {}
 
-  getAll(page = 1, pageSize = 25, search?: string): Observable<PagedResult<Devices>> {
-    const params: Record<string, string> = { page: String(page), pageSize: String(pageSize) };
-    if (search) params['search'] = search;
+  getAll(query: DeviceQuery = {}): Observable<PagedResult<Devices>> {
+    let params = new HttpParams()
+      .set('page', String(query.page ?? 1))
+      .set('pageSize', String(query.pageSize ?? 25));
+
+    if (query.search?.trim()) params = params.set('search', query.search.trim());
+    if (query.type) params = params.set('type', query.type);
+    if (query.isMonitored != null) params = params.set('isMonitored', String(query.isMonitored));
+
     return this.http.get<PagedResult<Devices>>(this.apiUrl, { params });
   }
 

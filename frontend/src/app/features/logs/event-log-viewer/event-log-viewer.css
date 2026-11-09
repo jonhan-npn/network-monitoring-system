@@ -1,1 +1,107 @@
-select{height:34px;border:1px solid #e5e4ec;border-radius:6px;padding:0 8px;color:#66687b;background:#fff;font:12px inherit}@media(max-width:650px){.toolbar{flex-direction:column}select{width:100%}}
+.filter {
+  width: auto;
+  min-width: 150px;
+}
+
+.date-field {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.date-field span {
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+.date-field .input {
+  width: 145px;
+  min-height: 36px;
+  padding: 6px 9px;
+  font-size: 12px;
+}
+
+.event-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.event-cell > span:last-child {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.event-cell strong {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.event-cell small {
+  font-size: 10px;
+  color: var(--muted-2);
+}
+
+.event-dot {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.event-dot.badge-ok {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.event-dot.badge-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.event-dot.badge-warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.event-dot.badge-info {
+  background: var(--info-soft);
+  color: var(--info);
+}
+
+.event-dot.badge-muted {
+  background: #f1f3f7;
+  color: #6b7280;
+}
+
+.device-link {
+  color: var(--brand);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.device-link:hover {
+  text-decoration: underline;
+}
+
+.muted {
+  color: var(--muted-2);
+}
+
+.detail-cell {
+  max-width: 480px;
+  color: var(--ink-2);
+}
+
+.pager button.current {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}

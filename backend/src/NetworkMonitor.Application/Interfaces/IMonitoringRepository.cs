@@ -23,5 +23,17 @@ public interface IMonitoringRepository
 
     Task<ResourceSample?> GetLatestResourceSampleAsync(Guid deviceId, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Latest resource sample per device, in one round trip. Used by the
+    /// dashboard summary so it doesn't fan out N concurrent queries against
+    /// the same (non-thread-safe) DbContext.
+    /// </summary>
+    Task<IReadOnlyDictionary<Guid, ResourceSample>> GetLatestResourceSamplesAsync(
+        IReadOnlyList<Guid> deviceIds, CancellationToken cancellationToken = default);
+
+    // ---- Retention (called by the Worker's DataRetentionJob) ----
+    Task<int> PurgeOldPingResultsAsync(DateTime olderThan, CancellationToken cancellationToken = default);
+    Task<int> PurgeOldResourceSamplesAsync(DateTime olderThan, CancellationToken cancellationToken = default);
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

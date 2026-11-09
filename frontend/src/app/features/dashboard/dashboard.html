@@ -1,889 +1,274 @@
-<!-- <div class="shell" [class.menu-open]="sidebarOpen()">
-  <aside class="sidebar">
-    <div class="brand"><span class="brand-mark"><i></i><i></i><i></i></span><span>netwatch</span></div>
-    <button class="workspace"><span class="workspace-avatar">N</span><span><strong>Northstar Group</strong><small>Enterprise plan</small></span><b>⌄</b></button>
-    <nav>
-      <p class="nav-label">MONITORING</p>
-      @for (item of primaryNav; track item.label) {
-        <button class="nav-item" [class.active]="activeNav() === item.label" (click)="selectNav(item.label)"><span class="nav-icon" [attr.data-icon]="item.icon"></span>{{ item.label }} @if (item.badge) { <em>{{ item.badge }}</em> }</button>
-      }
-      <p class="nav-label spaced">MANAGEMENT</p>
-      @for (item of secondaryNav; track item.label) {
-        <button class="nav-item" [class.active]="activeNav() === item.label" (click)="selectNav(item.label)"><span class="nav-icon" [attr.data-icon]="item.icon"></span>{{ item.label }}</button>
-      }
-    </nav>
-    <div class="sidebar-bottom"><div class="support"><span>?</span><div><strong>Need help?</strong><small>Visit support center</small></div></div><button class="profile"><span class="avatar">JM</span><span><strong>Johan M.</strong><small>Administrator</small></span><b>⋮</b></button></div>
-  </aside>
-
-  <main>
-    <header>
-      <button class="mobile-menu" (click)="sidebarOpen.set(!sidebarOpen())">☰</button>
-      <div class="crumb"><span>Monitoring</span><b>/</b><strong>Overview</strong></div>
-      <div class="header-actions"><button class="search">⌕ <span>Search anything...</span><kbd>⌘ K</kbd></button><button class="icon-button">☀</button><button class="notification">♧<i></i></button></div>
-    </header>
-    <section class="content">
-      <div class="welcome-row"><div><p class="eyebrow">SUNDAY, AUGUST 2</p><h1>Good morning, Johan <span>✦</span></h1><p class="subtext">Here’s what’s happening across your network.</p></div><div class="live-status"><span class="pulse"></span> All systems operational <button>View status</button></div></div>
-
-      <div class="stats-grid">
-        <article class="stat-card"><div class="stat-head"><span class="card-icon devices">▣</span><button>•••</button></div><p>Total devices</p><div class="stat-value">48 <span class="up">↗ 12.5%</span></div><small>vs. previous 30 days</small><div class="mini-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></article>
-        <article class="stat-card"><div class="stat-head"><span class="card-icon online">◉</span><button>•••</button></div><p>Devices online</p><div class="stat-value">44 <span class="up">91.7%</span></div><small>4 devices need attention</small><div class="status-track"><i class="online-bar"></i><i class="warning-bar"></i><i class="offline-bar"></i></div></article>
-        <article class="stat-card"><div class="stat-head"><span class="card-icon alerts">♢</span><button>•••</button></div><p>Active alerts</p><div class="stat-value">3 <span class="down">↘ 40%</span></div><small>vs. previous 24 hours</small><div class="alert-dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></article>
-        <article class="stat-card"><div class="stat-head"><span class="card-icon uptime">⌁</span><button>•••</button></div><p>Network uptime</p><div class="stat-value">99.98<span class="unit">%</span></div><small>Last 30 days</small><div class="uptime-line"><svg viewBox="0 0 260 44" preserveAspectRatio="none"><path d="M0 31 C15 31 16 10 29 24 S48 31 58 26 S72 8 87 26 S109 31 121 18 S139 23 151 18 S167 33 181 23 S195 9 211 19 S233 27 260 8"/></svg></div></article>
-      </div>
-
-      <div class="dashboard-grid">
-        <article class="panel performance"><div class="panel-head"><div><h2>Network performance</h2><p>Average response time across all devices</p></div><div class="panel-actions"><div class="segmented">@for (range of ['1H','6H','24H','7D']; track range) { <button [class.selected]="selectedRange() === range" (click)="setRange(range)">{{range}}</button> }</div><button class="more">•••</button></div></div><div class="chart-legend"><span><i class="dot purple"></i>Response time</span><strong>12.4 <small>ms avg.</small></strong></div><div class="line-chart"><div class="y-axis"><span>40ms</span><span>30ms</span><span>20ms</span><span>10ms</span><span>0ms</span></div><svg viewBox="0 0 700 220" preserveAspectRatio="none"><defs><linearGradient id="fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#7c5cfc" stop-opacity=".25"/><stop offset="1" stop-color="#7c5cfc" stop-opacity="0"/></linearGradient></defs><path class="grid-line" d="M0 12H700M0 62H700M0 112H700M0 162H700M0 212H700"/><path class="area" d="M0 153 C27 149 34 130 58 141 S88 172 110 143 S138 121 161 139 S193 155 216 118 S250 135 271 109 S305 141 326 117 S361 65 382 105 S419 143 440 123 S477 90 496 114 S531 153 552 129 S582 94 605 117 S635 142 654 96 S678 113 700 74 V220 H0Z"/><path class="line" d="M0 153 C27 149 34 130 58 141 S88 172 110 143 S138 121 161 139 S193 155 216 118 S250 135 271 109 S305 141 326 117 S361 65 382 105 S419 143 440 123 S477 90 496 114 S531 153 552 129 S582 94 605 117 S635 142 654 96 S678 113 700 74"/><circle cx="382" cy="105" r="5"/></svg><div class="x-axis"><span>00:00</span><span>04:00</span><span>08:00</span><span>12:00</span><span>16:00</span><span>20:00</span><span>Now</span></div></div></article>
-        <article class="panel health"><div class="panel-head"><div><h2>Device health</h2><p>Current status distribution</p></div><button class="more">•••</button></div><div class="donut-wrap"><div class="donut"><div><strong>48</strong><span>Devices</span></div></div><ul><li><i class="dot green"></i><span>Online</span><strong>44</strong></li><li><i class="dot amber"></i><span>Warning</span><strong>2</strong></li><li><i class="dot red"></i><span>Offline</span><strong>2</strong></li></ul></div><button class="view-report">View device report <span>→</span></button></article>
-      </div>
-
-      <article class="panel device-panel"><div class="panel-head"><div><h2>Device overview</h2><p>Your recently monitored devices</p></div><div class="panel-actions"><button class="filter">☷ Filter</button><button class="primary">+ Add device</button></div></div><div class="table-wrap"><table><thead><tr><th>DEVICE</th><th>LOCATION</th><th>IP ADDRESS</th><th>STATUS</th><th>RESPONSE TIME</th><th></th></tr></thead><tbody>@for (device of devices; track device.ip) {<tr><td><span class="device-avatar" [class]="device.color">{{device.initials}}</span><span><strong>{{device.name}}</strong><small>{{device.type}}</small></span></td><td>{{device.location}}</td><td><code>{{device.ip}}</code></td><td><span class="status" [class]="device.status.toLowerCase()"><i></i>{{device.status}}</span></td><td [class.warn-text]="device.status === 'Warning'">{{device.latency}}</td><td><button class="row-more">•••</button></td></tr>}</tbody></table></div><div class="table-footer"><span>Showing 4 of 48 devices</span><button>View all devices <b>→</b></button></div></article>
-    </section>
-  </main>
-</div> -->
-<div class="min-h-screen bg-[#f6f8fc] text-[#172033]" [class.menu-open]="sidebarOpen()">
-  <!-- ============================================================
-       SIDEBAR
-       ============================================================ -->
-  <aside class="
-      fixed inset-y-0 left-0 z-50
-      flex w-65 flex-col
-      border-r border-[#e8ebf2]
-      bg-white
-      transition-transform duration-300
-      lg:translate-x-0
-    " [class.-translate-x-full]="!sidebarOpen()">
-    <!-- Brand -->
-    <div class="flex h-19 items-center gap-3 border-b border-[#eef0f5] px-6">
-      <div class="
-          flex h-10 w-10 items-center justify-center
-          rounded-xl
-          bg-linear-to-br from-[#4f7cff] to-[#7c5cff]
-          text-white
-          shadow-[0_8px_20px_rgba(79,124,255,0.25)]
-        ">
-        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M4 17l6-6 4 4 6-8" />
-          <path d="M4 20h16" />
-        </svg>
-      </div>
-      <div>
-        <h1 class="font-['Outfit'] text-lg font-bold tracking-tight text-[#172033]">
-          netwatch
-        </h1>
-        <p class="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9aa3b5]">
-          Network Monitor
-        </p>
-      </div>
-    </div>
-    <!-- Workspace -->
-    <div class="px-4 pt-5">
-      <div class="
-          flex items-center gap-3
-          rounded-xl
-          bg-[#f6f8fc]
-          px-3 py-3
-        ">
-        <div class="
-            flex h-9 w-9 shrink-0 items-center justify-center
-            rounded-lg
-            bg-linear-to-br from-[#667eea] to-[#764ba2]
-            text-xs font-bold text-white
-          ">
-          NG
-        </div>
-        <div class="min-w-0 flex-1">
-          <p class="truncate text-xs font-bold text-[#263247]">
-            Northstar Group
-          </p>
-          <p class="text-[10px] text-[#9aa3b5]">
-            Enterprise
-          </p>
-        </div>
-        <svg class="h-4 w-4 text-[#9aa3b5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M6 9l6 6 6-6" />
-        </svg>
-      </div>
-    </div>
-    <!-- Navigation -->
-    <nav class="flex-1 overflow-y-auto px-4 py-6">
-      <p class="
-          mb-3 px-3
-          text-[10px] font-bold uppercase
-          tracking-[0.15em]
-          text-[#a1a9b8]
-        ">
-        Main
+<div class="page">
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">Network overview</p>
+      <h1 class="page-title">{{ greeting() }}</h1>
+      <p class="page-subtitle">
+        {{ today | date: 'fullDate' }} · Here's what's happening across your network today.
       </p>
-      <div class="space-y-1">
-        @for (item of primaryNav; track item.label) {
-        <button type="button" (click)="setActiveNav(item.label)" class="
-              flex w-full items-center gap-3
-              rounded-xl px-3 py-2.5
-              text-left text-sm font-semibold
-              transition-all duration-200
-            " [class.bg-[#eef3ff]]="activeNav() === item.label" [class.text-[#4f7cff]]="activeNav() === item.label"
-          [class.text-[#657087]]="activeNav() !== item.label" [class.hover:bg-[#f6f8fc]]="activeNav() !== item.label">
-          <span class="flex h-5 w-5 items-center justify-center">
-            <i [class]="item.icon"></i>
-          </span>
-          <span class="flex-1">
-            {{ item.label }}
-          </span>
-          @if (item.badge) {
-          <span class="
-                  rounded-full
-                  bg-[#edf1f8]
-                  px-2 py-0.5
-                  text-[10px] font-bold
-                  text-[#788399]
-                ">
-            {{ item.badge }}
-          </span>
-          }
-        </button>
-        }
-      </div>
-      <p class="
-          mb-3 mt-8 px-3
-          text-[10px] font-bold uppercase
-          tracking-[0.15em]
-          text-[#a1a9b8]
-        ">
-        Management
-      </p>
-      <div class="space-y-1">
-        @for (item of secondaryNav; track item.label) {
-        <button type="button" (click)="setActiveNav(item.label)" class="
-              flex w-full items-center gap-3
-              rounded-xl px-3 py-2.5
-              text-left text-sm font-semibold
-              text-[#657087]
-              transition-all duration-200
-              hover:bg-[#f6f8fc]
-            " [class.bg-[#eef3ff]]="activeNav() === item.label" [class.text-[#4f7cff]]="activeNav() === item.label">
-          <span class="flex h-5 w-5 items-center justify-center">
-            <i [class]="item.icon"></i>
-          </span>
-          <span class="flex-1">
-            {{ item.label }}
-          </span>
-        </button>
-        }
-      </div>
-    </nav>
-    <!-- Support / Profile -->
-    <div class="border-t border-[#eef0f5] p-4">
-      <button type="button" class="
-          mb-3 flex w-full items-center gap-3
-          rounded-xl px-3 py-2.5
-          text-left text-sm font-semibold
-          text-[#657087]
-          hover:bg-[#f6f8fc]
-        ">
-        <span class="
-            flex h-8 w-8 items-center justify-center
-            rounded-lg
-            bg-[#f1f4f9]
-            text-[#788399]
-          ">
-          ?
-        </span>
-        <span>Help & Support</span>
-      </button>
-      <div class="flex items-center gap-3 px-2 py-2">
-        <div class="
-            flex h-9 w-9 items-center justify-center
-            rounded-full
-            bg-linear-to-br from-[#f6c7ff] to-[#a9c8ff]
-            text-xs font-bold text-white
-          ">
-          JD
-        </div>
-        <div class="min-w-0 flex-1">
-          <p class="truncate text-xs font-bold text-[#263247]">
-            John Doe
-          </p>
-          <p class="truncate text-[10px] text-[#9aa3b5]">
-            Administrator
-          </p>
-        </div>
-        <button type="button" class="text-[#9aa3b5] hover:text-[#657087]">
-          ⋮
-        </button>
-      </div>
     </div>
-  </aside>
-  <!-- Mobile overlay -->
-  @if (sidebarOpen()) {
-  <div class="
-        fixed inset-0 z-40
-        bg-black/30
-        lg:hidden
-      " (click)="toggleSidebar()"></div>
+
+    <div class="row">
+      @if (offlineDevices() > 0) {
+        <span class="badge badge-danger">{{ offlineDevices() }} device(s) offline</span>
+      } @else if (totalDevices() === 0) {
+        <span class="badge badge-muted">No devices yet</span>
+      } @else {
+        <span class="badge badge-ok">All systems operational</span>
+      }
+      <a routerLink="/devices/new" class="btn btn-primary">+ Add device</a>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-error" style="margin-bottom: 18px">{{ error() }}</div>
   }
-  <!-- ============================================================
-       MAIN
-       ============================================================ -->
-  <main class="min-h-screen lg:ml-65">
-    <!-- ==========================================================
-         HEADER
-         ========================================================== -->
-    <header class="
-        sticky top-0 z-30
-        flex h-19 items-center
-        justify-between
-        border-b border-[#e8ebf2]
-        bg-white/95
-        px-4 backdrop-blur
-        sm:px-6 lg:px-8
-      ">
-      <div class="flex items-center gap-4">
-        <!-- Mobile menu -->
-        <button type="button" class="
-            flex h-10 w-10 items-center justify-center
-            rounded-xl
-            border border-[#e8ebf2]
-            text-[#657087]
-            lg:hidden
-          " (click)="toggleSidebar()">
-          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-        <!-- Breadcrumb -->
-        <div class="hidden items-center gap-2 text-sm sm:flex">
-          <span class="text-[#9aa3b5]">
-            {{ activeNav() }}
-          </span>
-          <span class="text-[#c5cad4]">
-            /
-          </span>
-          <span class="font-semibold text-[#263247]">
-            Overview
-          </span>
-        </div>
+
+  <!-- Stats -->
+  <div class="stat-grid">
+    <article class="stat">
+      <div>
+        <p class="stat-label">Total devices</p>
+        <p class="stat-value">
+          @if (loading()) {
+            <span class="skeleton" style="display: inline-block; width: 46px; height: 26px"></span>
+          } @else {
+            {{ totalDevices() }}
+          }
+        </p>
+        <p class="stat-foot">{{ monitoredDevices() }} actively monitored</p>
       </div>
-      <!-- Header actions -->
-      <div class="flex items-center gap-2 sm:gap-3">
-        <!-- Search -->
-        <button type="button" class="
-            flex h-10 w-10 items-center justify-center
-            rounded-xl
-            text-[#788399]
-            hover:bg-[#f6f8fc]
-          ">
-          <svg class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="7" />
-            <path d="M20 20l-4-4" />
-          </svg>
-        </button>
-        <!-- Theme -->
-        <button type="button" class="
-            hidden h-10 w-10
-            items-center justify-center
-            rounded-xl
-            text-[#788399]
-            hover:bg-[#f6f8fc]
-            sm:flex
-          ">
-          <svg class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="4" />
-            <path
-              d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
-          </svg>
-        </button>
-        <!-- Notifications -->
-        <button type="button" class="
-            relative flex h-10 w-10
-            items-center justify-center
-            rounded-xl
-            text-[#788399]
-            hover:bg-[#f6f8fc]
-          ">
-          <svg class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
-            <path d="M13.7 21a2 2 0 0 1-3.4 0" />
-          </svg>
-          <span class="
-              absolute right-2.5 top-2
-              h-2 w-2
-              rounded-full
-              bg-[#ff5f6d]
-              ring-2 ring-white
-            "></span>
-        </button>
+      <span class="stat-icon brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+          <rect x="3" y="4" width="18" height="7" rx="2" />
+          <rect x="3" y="13" width="18" height="7" rx="2" />
+          <path d="M7 7.5h.01M7 16.5h.01" />
+        </svg>
+      </span>
+    </article>
+
+    <article class="stat">
+      <div>
+        <p class="stat-label">Online</p>
+        <p class="stat-value">{{ onlineDevices() }}</p>
+        <p class="stat-foot stat-foot-ok">{{ onlinePercent() }}% availability</p>
       </div>
-    </header>
-    <!-- ==========================================================
-         CONTENT
-         ========================================================== -->
-    <div class="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-      <!-- Welcome -->
-      <section class="
-          mb-8 flex flex-col gap-4
-          md:flex-row md:items-end md:justify-between
-        ">
+      <span class="stat-icon ok">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+          <path d="M5 12.5a10 10 0 0 1 14 0" />
+          <path d="M8.5 16a5.5 5.5 0 0 1 7 0" />
+          <circle cx="12" cy="19" r="1" fill="currentColor" stroke="none" />
+        </svg>
+      </span>
+    </article>
+
+    <article class="stat">
+      <div>
+        <p class="stat-label">Offline</p>
+        <p class="stat-value">{{ offlineDevices() }}</p>
+        <p class="stat-foot">{{ unknownDevices() }} awaiting first check</p>
+      </div>
+      <span class="stat-icon danger">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+          <path d="M12 8v5M12 17h.01" />
+          <path d="M10.3 3.8 2.4 17a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.8a2 2 0 0 0-3.4 0Z" />
+        </svg>
+      </span>
+    </article>
+
+    <article class="stat">
+      <div>
+        <p class="stat-label">Alerts (24h)</p>
+        <p class="stat-value">{{ activeAlerts() }}</p>
+        <p class="stat-foot">{{ activeRules() }} active rule(s)</p>
+      </div>
+      <span class="stat-icon warn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+          <path d="M18 8a6 6 0 0 0-12 0c0 6-2 7-2 8h16c0-1-2-2-2-8" />
+          <path d="M13.7 20a2 2 0 0 1-3.4 0" />
+        </svg>
+      </span>
+    </article>
+  </div>
+
+  <!-- Charts -->
+  <div class="dash-grid">
+    <section class="panel">
+      <div class="panel-head">
         <div>
-          <p class="
-              mb-1 text-xs font-bold uppercase
-              tracking-[0.12em]
-              text-[#4f7cff]
-            ">
-            Network Overview
-          </p>
-          <h2 class="
-              font-['Outfit']
-              text-2xl font-bold tracking-tight
-              text-[#172033]
-              sm:text-3xl
-            ">
-            Good morning, John 👋
-          </h2>
-          <p class="mt-2 text-sm text-[#8c96a8]">
-            Here's what's happening across your network today.
-          </p>
+          <h2 class="panel-title">Network performance</h2>
+          <p class="panel-sub">Average ping latency across all monitored devices</p>
         </div>
-        <!-- Status -->
-        <div class="
-            inline-flex w-fit items-center gap-2
-            rounded-full
-            border border-[#dff3e7]
-            bg-[#f2fbf5]
-            px-3 py-2
-            text-xs font-bold
-            text-[#32a866]
-          ">
-          <span class="h-2 w-2 rounded-full bg-[#35b86b]"></span>
-          All systems operational
+        <div class="segmented">
+          @for (option of ranges; track option) {
+            <button type="button" [class.selected]="range() === option" (click)="setRange(option)">
+              {{ option }}
+            </button>
+          }
         </div>
-      </section>
-      <!-- ========================================================
-           STATS
-           ======================================================== -->
-      <section class="
-          grid grid-cols-1 gap-4
-          sm:grid-cols-2
-          xl:grid-cols-4
-        ">
-        <!-- Total Devices -->
-        <article class="
-            rounded-2xl border border-[#e8ebf2]
-            bg-white p-5
-            shadow-[0_2px_10px_rgba(20,30,50,0.025)]
-          ">
-          <div class="flex items-start justify-between">
-            <div>
-              <p class="text-xs font-semibold text-[#8c96a8]">
-                Total Devices
-              </p>
-              <p class="
-                  mt-2 font-['Outfit']
-                  text-3xl font-bold
-                  tracking-tight text-[#172033]
-                ">
-                {{ totalDevices() }}
-              </p>
-            </div>
-            <div class="
-                flex h-10 w-10 items-center justify-center
-                rounded-xl
-                bg-[#eef3ff]
-                text-[#4f7cff]
-              ">
-              <i class="fa-solid fa-server"></i>
-            </div>
+      </div>
+      <div class="panel-body">
+        @if (chartStats(); as stats) {
+          <div class="chart-meta">
+            <span>Average <strong>{{ stats.average | number: '1.0-1' }} ms</strong></span>
+            <span>Peak <strong>{{ stats.peak | number: '1.0-1' }} ms</strong></span>
           </div>
-          <div class="mt-4 flex items-center gap-2 text-xs">
-            <span class="font-bold text-[#32a866]">
-              +4.8%
-            </span>
-            <span class="text-[#9aa3b5]">
-              from last month
-            </span>
+        }
+        @if (chartLoading()) {
+          <div class="skeleton" style="height: 250px; border-radius: 12px"></div>
+        } @else {
+          <app-line-chart
+            [series]="chartSeries()"
+            [labels]="chartLabels()"
+            [ySuffix]="' ms'"
+            [height]="250"
+            emptyLabel="No ping samples in this period yet. The worker records one every 30 seconds."
+          />
+        }
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2 class="panel-title">Device health</h2>
+          <p class="panel-sub">Current status distribution</p>
+        </div>
+        <span class="badge badge-brand badge-plain">{{ totalDevices() }} total</span>
+      </div>
+      <div class="panel-body donut-body">
+        <div class="donut">
+          <svg viewBox="0 0 100 100" class="donut-svg">
+            <circle cx="50" cy="50" r="40" fill="none" stroke-width="12" class="donut-track" />
+            <circle
+              cx="50"
+              cy="50"
+              r="40"
+              fill="none"
+              stroke-width="12"
+              stroke-linecap="round"
+              class="donut-online"
+              [attr.stroke-dasharray]="donut().onlineDash"
+            />
+            <circle
+              cx="50"
+              cy="50"
+              r="40"
+              fill="none"
+              stroke-width="12"
+              stroke-linecap="round"
+              class="donut-offline"
+              [attr.stroke-dasharray]="donut().offlineDash"
+              [attr.stroke-dashoffset]="donut().offlineOffset"
+            />
+            <circle
+              cx="50"
+              cy="50"
+              r="40"
+              fill="none"
+              stroke-width="12"
+              stroke-linecap="round"
+              class="donut-unknown"
+              [attr.stroke-dasharray]="donut().unknownDash"
+              [attr.stroke-dashoffset]="donut().unknownOffset"
+            />
+          </svg>
+          <div class="donut-center">
+            <strong>{{ onlinePercent() }}%</strong>
+            <small>healthy</small>
           </div>
-        </article>
-        <!-- Devices Online -->
-        <article class="
-            rounded-2xl border border-[#e8ebf2]
-            bg-white p-5
-            shadow-[0_2px_10px_rgba(20,30,50,0.025)]
-          ">
-          <div class="flex items-start justify-between">
-            <div>
-              <p class="text-xs font-semibold text-[#8c96a8]">
-                Devices Online
-              </p>
-              <p class="
-                  mt-2 font-['Outfit']
-                  text-3xl font-bold
-                  tracking-tight text-[#172033]
-                ">
-                {{ onlineDevices() }}
-              </p>
-            </div>
-            <div class="
-                flex h-10 w-10 items-center justify-center
-                rounded-xl
-                bg-[#ecfaf3]
-                text-[#32a866]
-              ">
-              <i class="fa-solid fa-wifi"></i>
-            </div>
-          </div>
-          <div class="mt-4 flex items-center gap-2 text-xs">
-            <span class="font-bold text-[#32a866]">
-              {{ onlinePercentage() }}%
-            </span>
-            <span class="text-[#9aa3b5]">
-              availability
-            </span>
-          </div>
-        </article>
-        <!-- Alerts -->
-        <article class="
-            rounded-2xl border border-[#e8ebf2]
-            bg-white p-5
-            shadow-[0_2px_10px_rgba(20,30,50,0.025)]
-          ">
-          <div class="flex items-start justify-between">
-            <div>
-              <p class="text-xs font-semibold text-[#8c96a8]">
-                Active Alerts
-              </p>
-              <p class="
-                  mt-2 font-['Outfit']
-                  text-3xl font-bold
-                  tracking-tight text-[#172033]
-                ">
-                {{ activeAlerts() }}
-              </p>
-            </div>
-            <div class="
-                flex h-10 w-10 items-center justify-center
-                rounded-xl
-                bg-[#fff4e9]
-                text-[#f39a42]
-              ">
-              <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
-          </div>
-          <div class="mt-4 flex items-center gap-2 text-xs">
-            <span class="font-bold text-[#f39a42]">
-              {{ criticalAlerts() }}
-            </span>
-            <span class="text-[#9aa3b5]">
-              critical
-            </span>
-          </div>
-        </article>
-        <!-- Uptime -->
-        <article class="
-            rounded-2xl border border-[#e8ebf2]
-            bg-white p-5
-            shadow-[0_2px_10px_rgba(20,30,50,0.025)]
-          ">
-          <div class="flex items-start justify-between">
-            <div>
-              <p class="text-xs font-semibold text-[#8c96a8]">
-                Network Uptime
-              </p>
-              <p class="
-                  mt-2 font-['Outfit']
-                  text-3xl font-bold
-                  tracking-tight text-[#172033]
-                ">
-                {{ uptime() }}%
-              </p>
-            </div>
-            <div class="
-                flex h-10 w-10 items-center justify-center
-                rounded-xl
-                bg-[#f0efff]
-                text-[#715cff]
-              ">
-              <i class="fa-solid fa-chart-line"></i>
-            </div>
-          </div>
-          <div class="mt-4 flex items-center gap-2 text-xs">
-            <span class="font-bold text-[#32a866]">
-              +0.12%
-            </span>
-            <span class="text-[#9aa3b5]">
-              this month
-            </span>
-          </div>
-        </article>
-      </section>
+        </div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      <!-- ========================================================
-           CHARTS
-           ======================================================== -->
-      <section class="
-          mt-6 grid grid-cols-1 gap-6
-          xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,1fr)]
-        ">
-        <!-- Performance -->
-        <article class="
-            min-w-0 rounded-2xl
-            border border-[#e8ebf2]
-            bg-white p-5
-            shadow-[0_2px_10px_rgba(20,30,50,0.025)]
-            sm:p-6
-          ">
-          <div class="
-              flex flex-col gap-4
-              sm:flex-row sm:items-start sm:justify-between
-            ">
-            <div>
-              <h3 class="font-['Outfit'] text-base font-bold text-[#172033]">
-                Network Performance
-              </h3>
-              <p class="mt-1 text-xs text-[#9aa3b5]">
-                Average response time across monitored devices
-              </p>
-            </div>
-            <!-- Range -->
-            <div class="
-                flex w-fit rounded-lg
-                bg-[#f5f7fa]
-                p-1
-              ">
-              @for (range of timeRanges; track range) {
-              <button type="button" (click)="selectRange(range)" class="
-                    rounded-md px-3 py-1.5
-                    text-[11px] font-bold
-                    text-[#8c96a8]
-                    transition
-                  " [class.bg-white]="selectedRange() === range" [class.text-[#4f7cff]]="selectedRange() === range"
-                [class.shadow-sm]="selectedRange() === range">
-                {{ range }}
-              </button>
-              }
-            </div>
-          </div>
-          <!-- SVG chart -->
-          <div class="mt-6 overflow-hidden">
-            <svg class="h-auto w-full [&_line]:stroke-[#e6ebf2] [&_.chart-area]:fill-[url(#performanceGradient)] [&_.chart-area]:stroke-none [&_.chart-line]:fill-none [&_.chart-line]:stroke-[#4f7cff] [&_.chart-line]:stroke-3" viewBox="0 0 800 300" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="performanceGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-opacity=".18" />
-                  <stop offset="100%" stop-opacity="0" />
-                </linearGradient>
-              </defs>
-              <!-- Grid -->
-              <line x1="0" y1="50" x2="800" y2="50" />
-              <line x1="0" y1="110" x2="800" y2="110" />
-              <line x1="0" y1="170" x2="800" y2="170" />
-              <line x1="0" y1="230" x2="800" y2="230" />
-              <!-- Area -->
-              <path class="chart-area" d="
-                  M0 190
-                  C60 180 90 150 140 165
-                  C190 180 220 130 270 145
-                  C320 160 350 100 400 120
-                  C450 140 480 80 530 105
-                  C580 130 610 90 660 100
-                  C710 110 750 75 800 90
-                  L800 300
-                  L0 300
-                  Z
-                " />
-              <!-- Line -->
-              <path class="chart-line" d="
-                  M0 190
-                  C60 180 90 150 140 165
-                  C190 180 220 130 270 145
-                  C320 160 350 100 400 120
-                  C450 140 480 80 530 105
-                  C580 130 610 90 660 100
-                  C710 110 750 75 800 90
-                " />
-            </svg>
-          </div>
-          <div class="
-              mt-2 flex justify-between
-              text-[10px] font-medium
-              text-[#a1a9b8]
-            ">
-            <span>00:00</span>
-            <span>04:00</span>
-            <span>08:00</span>
-            <span>12:00</span>
-            <span>16:00</span>
-            <span>20:00</span>
-            <span>24:00</span>
-          </div>
-        </article>
-
-
-
-
-        <!-- Device Health -->
-        <article class="
-            rounded-2xl
-            border border-[#e8ebf2]
-            bg-white p-5
-            shadow-[0_2px_10px_rgba(20,30,50,0.025)]
-            sm:p-6
-          ">
+        <div class="health-legend">
           <div>
-            <h3 class="font-['Outfit'] text-base font-bold text-[#172033]">
-              Device Health
-            </h3>
-            <p class="mt-1 text-xs text-[#9aa3b5]">
-              Current device status
-            </p>
+            <span><i class="dot ok"></i>Online</span>
+            <strong>{{ onlineDevices() }}</strong>
           </div>
-          <div class="mt-6 flex items-center justify-center">
-            <div class="relative h-48 w-48">
-              <svg class="h-full w-full -rotate-90" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="40" fill="none" stroke-width="12" class="stroke-[#edf0f5]" />
-                <circle cx="50" cy="50" r="40" fill="none" stroke-width="12" stroke-linecap="round" class="stroke-[#32a866]"
-                  [attr.stroke-dasharray]="deviceHealth.onlineDash" />
-                <circle cx="50" cy="50" r="40" fill="none" stroke-width="12" stroke-linecap="round"
-                  class="stroke-[#f3a54a]" [attr.stroke-dasharray]="deviceHealth.warningDash"
-                  [attr.stroke-dashoffset]="deviceHealth.warningOffset" />
-                <circle cx="50" cy="50" r="40" fill="none" stroke-width="12" stroke-linecap="round"
-                  class="stroke-[#ff6675]" [attr.stroke-dasharray]="deviceHealth.offlineDash"
-                  [attr.stroke-dashoffset]="deviceHealth.offlineOffset" />
-              </svg>
-              <div class="
-                  absolute inset-0
-                  flex flex-col
-                  items-center justify-center
-                ">
-                <span class="
-                    font-['Outfit']
-                    text-3xl font-bold
-                    text-[#172033]
-                  ">
-                  {{ onlinePercentage() }}%
-                </span>
-                <span class="text-xs text-[#9aa3b5]">
-                  Healthy
-                </span>
-              </div>
-            </div>
-          </div>
-          <!-- Legend -->
-          <div class="mt-5 space-y-3">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="h-2.5 w-2.5 rounded-full bg-[#32a866]"></span>
-                <span class="text-xs font-semibold text-[#657087]">
-                  Online
-                </span>
-              </div>
-              <span class="text-xs font-bold text-[#263247]">
-                {{ onlineDevices() }}
-              </span>
-            </div>
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="h-2.5 w-2.5 rounded-full bg-[#f3a54a]"></span>
-                <span class="text-xs font-semibold text-[#657087]">
-                  Warning
-                </span>
-              </div>
-              <span class="text-xs font-bold text-[#263247]">
-                {{ warningDevices() }}
-              </span>
-            </div>
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="h-2.5 w-2.5 rounded-full bg-[#ff6675]"></span>
-                <span class="text-xs font-semibold text-[#657087]">
-                  Offline
-                </span>
-              </div>
-              <span class="text-xs font-bold text-[#263247]">
-                {{ offlineDevices() }}
-              </span>
-            </div>
-          </div>
-        </article>
-      </section>
-
-      <!-- ========================================================
-           DEVICE TABLE
-           ======================================================== -->
-      <section class="
-          mt-6 overflow-hidden
-          rounded-2xl
-          border border-[#e8ebf2]
-          bg-white
-          shadow-[0_2px_10px_rgba(20,30,50,0.025)]
-        ">
-        <!-- Header -->
-        <div class="
-            flex flex-col gap-3
-            border-b border-[#eef0f5]
-            px-5 py-5
-            sm:flex-row sm:items-center sm:justify-between
-            sm:px-6
-          ">
           <div>
-            <h3 class="font-['Outfit'] text-base font-bold text-[#172033]">
-              Device Overview
-            </h3>
-            <p class="mt-1 text-xs text-[#9aa3b5]">
-              Recently monitored devices
-            </p>
+            <span><i class="dot danger"></i>Offline</span>
+            <strong>{{ offlineDevices() }}</strong>
           </div>
-          <button type="button" class="
-              w-fit rounded-lg
-              px-3 py-2
-              text-xs font-bold
-              text-[#4f7cff]
-              hover:bg-[#eef3ff]
-            ">
-            View all devices →
-          </button>
+          <div>
+            <span><i class="dot muted"></i>Unknown</span>
+            <strong>{{ unknownDevices() }}</strong>
+          </div>
         </div>
-        <!-- Responsive table -->
-        <div class="overflow-x-auto">
-          <table class="w-full min-w-180 border-collapse">
-            <thead>
-              <tr class="
-                  border-b border-[#eef0f5]
-                  bg-[#fafbfc]
-                  text-left
-                ">
-                <th class="
-                    px-6 py-3
-                    text-[10px] font-bold uppercase
-                    tracking-widest
-                    text-[#9aa3b5]
-                  ">
-                  Device
-                </th>
-                <th class="
-                    px-6 py-3
-                    text-[10px] font-bold uppercase
-                    tracking-widest
-                    text-[#9aa3b5]
-                  ">
-                  IP Address
-                </th>
-                <th class="
-                    px-6 py-3
-                    text-[10px] font-bold uppercase
-                    tracking-widest
-                    text-[#9aa3b5]
-                  ">
-                  Status
-                </th>
-                <th class="
-                    px-6 py-3
-                    text-[10px] font-bold uppercase
-                    tracking-widest
-                    text-[#9aa3b5]
-                  ">
-                  Response
-                </th>
-                <th class="
-                    px-6 py-3
-                    text-[10px] font-bold uppercase
-                    tracking-widest
-                    text-[#9aa3b5]
-                  ">
-                  Last Seen
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (device of devices; track device.ip) {
-              <tr class="
-                    border-b border-[#f0f2f6]
-                    transition
-                    last:border-b-0
-                    hover:bg-[#fafbfe]
-                  ">
-                <!-- Device -->
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-3">
-                    <div class="
-                          flex h-9 w-9
-                          items-center justify-center
-                          rounded-lg
-                          bg-[#f1f4f9]
-                          text-[#788399]
-                        ">
-                      <i class="fa-solid fa-server"></i>
-                    </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Devices -->
+  <section class="panel" style="margin-top: 20px">
+    <div class="panel-head">
+      <div>
+        <h2 class="panel-title">Device overview</h2>
+        <p class="panel-sub">Most recently monitored devices</p>
+      </div>
+      <a routerLink="/devices" class="btn btn-secondary btn-sm">View all devices →</a>
+    </div>
+
+    @if (loading()) {
+      <div style="padding: 18px">
+        <div class="skeleton" style="height: 44px; margin-bottom: 8px"></div>
+        <div class="skeleton" style="height: 44px; margin-bottom: 8px"></div>
+        <div class="skeleton" style="height: 44px"></div>
+      </div>
+    } @else if (!rows().length) {
+      <div class="empty">
+        <span class="empty-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <rect x="3" y="4" width="18" height="7" rx="2" />
+            <rect x="3" y="13" width="18" height="7" rx="2" />
+            <path d="M7 7.5h.01M7 16.5h.01" />
+          </svg>
+        </span>
+        <strong>No devices yet</strong>
+        <span>Add your first device to start collecting ping and resource data.</span>
+        <a routerLink="/devices/new" class="btn btn-primary btn-sm">Add a device</a>
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Device</th>
+              <th>IP address</th>
+              <th>Location</th>
+              <th>Status</th>
+              <th>Response</th>
+              <th>Last checked</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.id) {
+              <tr>
+                <td>
+                  <div class="device-cell">
+                    <span class="device-avatar">{{ row.name.charAt(0).toUpperCase() }}</span>
                     <div>
-                      <p class="text-xs font-bold text-[#263247]">
-                        {{ device.name }}
-                      </p>
-                      <p class="mt-0.5 text-[10px] text-[#9aa3b5]">
-                        {{ device.type }}
-                      </p>
+                      <strong>{{ row.name }}</strong>
+                      <small>{{ row.type }}</small>
                     </div>
                   </div>
                 </td>
-                <!-- IP -->
-                <td class="
-                      px-6 py-4
-                      font-mono text-xs
-                      text-[#657087]
-                    ">
-                  {{ device.ip }}
+                <td class="mono">{{ row.ip }}</td>
+                <td>{{ row.location }}</td>
+                <td>
+                  <span class="badge" [class]="badgeClass(row)">{{ statusOf(row) }}</span>
                 </td>
-                <!-- Status -->
-                <td class="px-6 py-4">
-                  <span class="
-                        inline-flex items-center gap-1.5
-                        rounded-full
-                        px-2.5 py-1
-                        text-[10px] font-bold
-                      " [class.bg-[#ecfaf3]]="device.status === 'Online'"
-                    [class.text-[#32a866]]="device.status === 'Online'"
-                    [class.bg-[#fff4e9]]="device.status === 'Warning'"
-                    [class.text-[#f39a42]]="device.status === 'Warning'"
-                    [class.bg-[#fff0f2]]="device.status === 'Offline'"
-                    [class.text-[#ff6675]]="device.status === 'Offline'">
-                    <span class="h-1.5 w-1.5 rounded-full" [class.bg-[#32a866]]="device.status === 'Online'"
-                      [class.bg-[#f39a42]]="device.status === 'Warning'"
-                      [class.bg-[#ff6675]]="device.status === 'Offline'"></span>
-                    {{ device.status }}
-                  </span>
+                <td class="num">{{ latency(row) }}</td>
+                <td>
+                  {{ row.lastCheckedAt ? (row.lastCheckedAt | date: 'mediumTime') : '—' }}
                 </td>
-                <!-- Response -->
-                <td class="
-                      px-6 py-4
-                      text-xs font-semibold
-                      text-[#657087]
-                    ">
-                  {{ device.response }}
-                </td>
-                <!-- Last seen -->
-                <td class="
-                      px-6 py-4
-                      text-xs
-                      text-[#8c96a8]
-                    ">
-                  {{ device.lastSeen }}
+                <td class="actions">
+                  <a [routerLink]="['/devices', row.id]" class="btn btn-ghost btn-sm">Open</a>
                 </td>
               </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
-  </main>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
 </div>

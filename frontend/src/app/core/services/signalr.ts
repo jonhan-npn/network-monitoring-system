@@ -1,58 +1,78 @@
 import { Injectable } from '@angular/core';
-import { DeviceStatusUpdate } from '../models/ping-result.model';
 import { Subject } from 'rxjs';
-import { ResourceSample } from '../models/device.model';
-import { EventLogEntry } from '../models/event-log.model';
-import { AuthService } from './auth.service';
-import { environment } from '../../../environments/environment';
 import * as signalR from '@microsoft/signalr';
 
+import { environment } from '../../../environments/environment';
+import { DeviceStatusUpdate } from '../models/ping-result.model';
+import { ResourceSampleUpdate } from '../models/device.model';
+import { AlertUpdate } from '../models/alert.model';
+import { AuthService } from './auth.service';
 
 const HUB_PATH = '/hubs/monitoring';
+const DASHBOARD_GROUP = 'dashboard';
 
 @Injectable({ providedIn: 'root' })
 export class Signalr {
   private hubConnection?: signalR.HubConnection;
 
   private readonly deviceStatusSubject = new Subject<DeviceStatusUpdate>();
-  private readonly resourceSampleSubject = new Subject<ResourceSample>();
-  private readonly eventLogSubject = new Subject<EventLogEntry>();
+  private readonly resourceSampleSubject = new Subject<ResourceSampleUpdate>();
+  private readonly alertSubject = new Subject<AlertUpdate>();
 
   readonly deviceStatus$ = this.deviceStatusSubject.asObservable();
   readonly resourceSample$ = this.resourceSampleSubject.asObservable();
-  readonly eventLog$ = this.eventLogSubject.asObservable();
+  readonly alert$ = this.alertSubject.asObservable();
 
   constructor(private readonly authService: AuthService) {}
 
-  /** Call once after login (e.g. in the admin layout's constructor/ngOnInit). */
-  connect(): void {
-    if (this.hubConnection) return;
+  /**
+   * Opens the hub connection (once) and joins the dashboard broadcast group.
+   * Safe to call from every page that wants live updates — reuses the
+   * existing connection after the first call.
+   */
+  async connect(): Promise<void> {
+    if (!this.hubConnection) {
+      this.hubConnection = new signalR.HubConnectionBuilder()
+        .withUrl(this.resolveHubUrl(), {
+          accessTokenFactory: () => this.authService.getToken() ?? '',
+        })
+        .withAutomaticReconnect()
+        .configureLogging(signalR.LogLevel.Warning)
+        .build();
 
-    const hubUrl = this.resolveHubUrl();
+      // Method names must match IMonitoringClient in NetworkMonitor.API.Hubs.
+      this.hubConnection.on('DeviceStatusChanged', (payload: DeviceStatusUpdate) =>
+        this.deviceStatusSubject.next(payload),
+      );
+      this.hubConnection.on('ResourceSampleReceived', (payload: ResourceSampleUpdate) =>
+        this.resourceSampleSubject.next(payload),
+      );
+      this.hubConnection.on('AlertTriggered', (payload: AlertUpdate) =>
+        this.alertSubject.next(payload),
+      );
+    }
 
-    this.hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl(hubUrl, {
-        accessTokenFactory: () => this.authService.getToken() ?? '',
-      })
-      .withAutomaticReconnect()
-      .configureLogging(signalR.LogLevel.Warning)
-      .build();
+    if (this.hubConnection.state === signalR.HubConnectionState.Disconnected) {
+      await this.hubConnection.start();
+    }
 
-    this.hubConnection.on('DeviceStatusChanged', (payload: DeviceStatusUpdate) =>
-      this.deviceStatusSubject.next(payload),
-    );
-    this.hubConnection.on('ResourceSampleReceived', (payload: ResourceSample) =>
-      this.resourceSampleSubject.next(payload),
-    );
-    this.hubConnection.on('EventLogged', (payload: EventLogEntry) =>
-      this.eventLogSubject.next(payload),
-    );
+    await this.hubConnection.invoke('SubscribeToDashboard');
+  }
 
-    this.hubConnection.start().catch((err) => console.error('SignalR connection failed:', err));
+  /** Joins a per-device group so a detail page only receives that device's updates. */
+  async subscribeToDevice(deviceId: string): Promise<void> {
+    await this.connect();
+    await this.hubConnection!.invoke('SubscribeToDevice', deviceId);
+  }
+
+  async unsubscribeFromDevice(deviceId: string): Promise<void> {
+    if (this.hubConnection?.state === signalR.HubConnectionState.Connected) {
+      await this.hubConnection.invoke('UnsubscribeFromDevice', deviceId);
+    }
   }
 
   disconnect(): void {
-    this.hubConnection?.stop();
+    void this.hubConnection?.stop();
     this.hubConnection = undefined;
   }
 
